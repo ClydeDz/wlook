@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(yarn install *)",
+      "Bash(npx electron-rebuild *)",
+      "Bash(npm show *)",
+      "Bash(python3 -c \"import sys,json; vs=json.load\\(sys.stdin\\); print\\('\\\\n'.join\\(v for v in vs if v.startswith\\('9.'\\) or v.startswith\\('10.'\\) or v.startswith\\('11.'\\)\\)\\)\")",
+      "Bash(yarn add *)",
+      "Bash(npx tsc *)",
+      "Bash(yarn test *)",
+      "Bash(yarn build *)"
+    ]
+  }
+}

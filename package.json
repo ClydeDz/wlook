@@ -1,0 +1,36 @@
+{
+  "name": "wlook",
+  "version": "0.1.0",
+  "description": "Offline dictionary lookup — brings macOS Look Up to Windows",
+  "main": "dist/agent/main.js",
+  "private": true,
+  "scripts": {
+    "build:main": "tsc -p tsconfig.main.json",
+    "build:popup": "esbuild src/popup/popup.ts --bundle --outfile=dist/popup/popup.js --platform=browser --target=chrome114",
+    "build:dashboard": "esbuild src/dashboard/app.tsx --bundle --outfile=dist/dashboard/app.js --platform=browser --target=chrome114 --jsx=automatic --jsx-import-source=preact",
+    "build": "yarn build:main && yarn build:popup && yarn build:dashboard && node scripts/copy-assets.mjs",
+    "dev:agent": "yarn build && electron .",
+    "dev:dashboard": "yarn build && electron . --open-dashboard",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "measure": "node scripts/measure.mjs",
+    "package": "yarn build && electron-builder",
+    "postinstall": "electron-rebuild -f -w better-sqlite3"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.10.0",
+    "electron-updater": "^6.3.9",
+    "lit-html": "^3.1.4",
+    "preact": "^10.20.1"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.6.0",
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/node": "^20.14.0",
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3",
+    "esbuild": "^0.21.5",
+    "typescript": "^5.5.2",
+    "vitest": "^1.6.0"
+  }
+}

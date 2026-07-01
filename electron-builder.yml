@@ -1,0 +1,45 @@
+appId: com.wlook.app
+productName: Wlook
+copyright: Copyright © 2024 Wlook
+directories:
+  output: release
+files:
+  - dist/**/*
+  - assets/**/*
+  - package.json
+  - node_modules/**/*
+  - "!node_modules/.cache"
+  - "!node_modules/.yarn-integrity"
+  - "!src/**/*"
+  - "!tools/**/*"
+  - "!tests/**/*"
+  - "!scripts/**/*"
+extraResources:
+  - from: assets/
+    to: assets/
+    filter: ["**/*"]
+asarUnpack:
+  - "**/*.node"
+win:
+  icon: assets/icons/app.ico
+  target:
+    - target: nsis
+      arch: [x64]
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: false
+  createDesktopShortcut: false
+  createStartMenuShortcut: true
+  installerIcon: assets/icons/app.ico
+  uninstallerIcon: assets/icons/app.ico
+  runAfterFinish: true
+mac:
+  icon: assets/icons/app.icns
+  category: public.app-category.utilities
+linux:
+  target: AppImage
+  icon: assets/icons/app.png
+publish:
+  provider: github
+  releaseType: release

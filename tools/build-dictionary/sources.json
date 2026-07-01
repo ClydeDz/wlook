@@ -1,0 +1,14 @@
+{
+  "kaikki_english": {
+    "description": "Kaikki.org pre-parsed Wiktionary English JSON",
+    "download_url": "https://kaikki.org/dictionary/English/kaikki.org-dictionary-English.json",
+    "license": "CC BY-SA 4.0",
+    "attribution": "Wiktionary contributors via kaikki.org"
+  },
+  "open_english_wordnet": {
+    "description": "Open English WordNet",
+    "github": "globalwordnet/english-wordnet",
+    "license": "CC BY 4.0",
+    "attribution": "English WordNet contributors"
+  }
+}
