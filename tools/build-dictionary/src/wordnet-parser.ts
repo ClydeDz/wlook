@@ -73,7 +73,7 @@ function loadJson<T>(path: string): T | null {
 }
 
 /**
- * Loads all synsets from *dir*/synsets.json (or a set of synset-*.json files)
+ * Loads all synsets from <dir>/synsets.json (or a set of synset-*.json files)
  * and returns a Map keyed by synset id.
  */
 function loadSynsets(dir: string): Map<string, WnSynset> {

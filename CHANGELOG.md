@@ -5,7 +5,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 
 ## [Unreleased]
 
-## [0.1.0] - 2024-01-01
+### Changed
+- `DEFAULT_CONFIG.catalogueUrl` now points at the upstream (`clydedz/wlook`) GitHub Releases manifest instead of `null`, so the "Browse Dictionaries" tab in the dashboard works on first run. Users can override per-install in `%APPDATA%\Wlook\config.json`; set to `null` to fall back to the local-drop empty state.
+- `ManifestPack.sha256` is now optional. Packs declared in `packs-manifest.json` without a `sha256` field install without integrity checking. Mismatched hashes still fail the install. **Trade-off:** this weakens the supply-chain check that previously protected against a tampered `.wlpack` from a compromised manifest host or hostile CDN edge. Publishers who care about integrity should keep shipping `sha256`. [0.1.0] - 2024-01-01
 ### Added
 - Initial project scaffold
 - Core dictionary engine with SQLite/FTS5 backend

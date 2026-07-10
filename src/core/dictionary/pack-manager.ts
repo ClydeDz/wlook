@@ -79,15 +79,22 @@ export class PackManager {
     const manifest = data as ManifestResponse
     const packs = manifest.packs
 
-    // Validate each pack entry has the required fields
+    // Validate each pack entry has the required fields. `sha256` is
+    // optional, but if it's present it must be a string (we don't
+    // compare it here — that's `installPack`'s job — but a clearly
+    // wrong type is still a malformed manifest).
     for (const pack of packs) {
       if (
         typeof pack.id !== 'string' ||
         typeof pack.url !== 'string' ||
-        typeof pack.sha256 !== 'string' ||
         typeof pack.version !== 'string'
       ) {
         throw new Error(`Manifest contains invalid pack entry: ${JSON.stringify(pack)}`)
+      }
+      if (pack.sha256 !== undefined && typeof pack.sha256 !== 'string') {
+        throw new Error(
+          `Manifest pack ${pack.id} has non-string sha256: ${JSON.stringify(pack)}`
+        )
       }
     }
 
@@ -152,13 +159,17 @@ export class PackManager {
     // Report 100% in case content-length was unavailable
     onProgress(100)
 
-    // Validate checksum
-    const actualHash = hash.digest('hex')
-    if (actualHash !== pack.sha256.toLowerCase()) {
-      await fs.unlink(tmpPath).catch(() => undefined)
-      throw new Error(
-        `SHA256 mismatch for pack ${pack.id}: expected ${pack.sha256}, got ${actualHash}`
-      )
+    // Validate checksum only if the manifest supplied one. A missing
+    // `sha256` is treated as "publisher opted out of integrity check";
+    // a present-but-mismatched `sha256` still fails the install.
+    if (pack.sha256) {
+      const actualHash = hash.digest('hex')
+      if (actualHash !== pack.sha256.toLowerCase()) {
+        await fs.unlink(tmpPath).catch(() => undefined)
+        throw new Error(
+          `SHA256 mismatch for pack ${pack.id}: expected ${pack.sha256}, got ${actualHash}`
+        )
+      }
     }
 
     // Atomically move to final location

@@ -5,10 +5,10 @@
   "private": true,
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js --lang en-US --kaikki ./cache/simple-extract.jsonl --output ./build/en-US-1.0.0.wlpack"
   },
   "dependencies": {
-    "better-sqlite3": "^9.4.3"
+    "better-sqlite3": "^11.10.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.8",

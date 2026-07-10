@@ -129,3 +129,37 @@ Start or restart the agent (`yarn dev:agent`). The pack appears in the dashboard
 Wiktionary content is licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). WordNet 3.1 is licensed under the [WordNet License](https://wordnet.princeton.edu/license-and-commercial-use) (BSD-style). Distribution of `.wlpack` files derived from these sources must include attribution. The build tool writes the `license` and `source` values into the pack's `metadata` table; the dashboard surfaces them in the pack detail view.
 
 Before publishing a pack derived from other sources, verify you have the right to redistribute derivative works under those terms.
+
+-------------
+
+ catalogueUrl 
+ 
+ https://github.com/clydedz/wlook/releases/latest/download/packs-manifest.json
+
+Then set  catalogueUrl  in  %APPDATA%\Wlook\config.json  to whichever URL you want users to hit.
+
+```
+// json
+{
+  "schemaVersion": 1,
+  "packs": [
+    {
+      "id":           "en-GB",
+      "displayName":  "English (United Kingdom)",
+      "version":      "1.0.0",
+      "sizeMB":       32,
+      "language":     "en",
+      "url":          "https://github.com/<owner>/<repo>/releases/download/<tag>/en-GB-1.0.0.wlpack",
+      "sha256":       "abc123…"
+    }
+  ]
+}
+```
+
+1. Build your  .wlpack  with  tools/build-dictionary/  (see  docs/packaging-a-dictionary.md ).
+2. Compute its SHA-256:  sha256sum your-pack.wlpack .
+3. Upload  your-pack.wlpack  as a release asset named exactly  <id>-<version>.wlpack  (because  installPack  reads  dictionariesDir/<id>-<version>.wlpack  after install).
+4. Create  packs-manifest.json , paste your manifest URLs and hashes in.
+5. Attach  packs-manifest.json  as a release asset.
+6. Set  catalogueUrl  in  %APPDATA%\Wlook\config.json  to the URL from step 5.
+7. Restart the agent, open the dashboard — the pack should appear in "Browse Dictionaries" with an Install button.

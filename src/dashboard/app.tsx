@@ -20,6 +20,7 @@ interface AppConfig {
     label: string
     urlTemplate: string
   }
+  catalogueUrl: string | null
   version: string
 }
 
@@ -148,6 +149,8 @@ function App() {
       <BrowseDictionaries
         installedIds={installedIds}
         onInstall={handleInstall}
+        catalogueUrl={config.catalogueUrl}
+        dictionariesDir={status.dictionariesDir}
       />
 
       <Settings config={config} onSave={handleSaveConfig} />

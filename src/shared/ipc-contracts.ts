@@ -28,6 +28,12 @@ export type DashboardStatus = {
   selectionCaptureMethod: 'uia' | 'clipboard' | 'unavailable'
   installedPacks: PackInfo[]
   preferredDialect: string
+  /**
+   * Absolute path of the user's `dictionaries` directory. Surfaced so the
+   * dashboard can tell the user where to drop `.wlpack` files when no
+   * remote catalogue is configured.
+   */
+  dictionariesDir: string
 }
 
 export type PackInfo = {
@@ -40,7 +46,20 @@ export type PackInfo = {
 
 export type ManifestPack = PackInfo & {
   url: string
-  sha256: string
+  /**
+   * Optional SHA-256 of the pack binary in lowercase hex.
+   *
+   * When present, `PackManager.installPack` validates the downloaded bytes
+   * against this hash and the install fails on mismatch. When omitted the
+   * install proceeds without inline integrity checking (still subject to
+   * transport-layer errors, but no defence against manifest tampering).
+   *
+   * Treating this as optional lets publishers ship a simple catalogue
+   * without computing and pasting a hash per pack. Recommended for
+   * trusted, single-publisher catalogues; strongly recommended for any
+   * catalogue served over an untrusted channel.
+   */
+  sha256?: string
 }
 
 export type IPCChannel =

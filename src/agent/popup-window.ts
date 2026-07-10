@@ -1,4 +1,4 @@
-import { BrowserWindow, screen } from 'electron'
+import { BrowserWindow, screen, ipcMain, type IpcMainEvent } from 'electron'
 import * as path from 'path'
 import type { LookupResponse } from '../shared/ipc-contracts'
 
@@ -12,14 +12,43 @@ const POPUP_MARGIN = 8 // pixels away from cursor
  *
  * The window is reused across lookups (singleton). It is created lazily
  * on first use and hidden (not destroyed) between lookups.
+ *
+ * Renderer-ready handshake:
+ *   The popup's `init()` in popup.ts is async (it awaits loadConfig before
+ *   registering its onDefinition listener). To avoid the first lookup
+ *   being dropped because main sends before the renderer is listening,
+ *   the renderer calls `notifyReady()` after registering its listener;
+ *   main queues the latest result until that signal arrives. We listen
+ *   globally on `ipcMain` and filter by `event.sender.id` so other
+ *   windows don't accidentally trigger our replay.
+ *
+ *   Note: `pendingResult` is overwritten if `show()` is called repeatedly
+ *   before the renderer signals ready — the latest lookup wins, which is
+ *   the correct user-facing behaviour (we don't double-show lookups).
  */
 export class PopupWindow {
   private win: BrowserWindow | null = null
   private dismissTimer: NodeJS.Timeout | null = null
   private dismissTimeoutMs: number
+  private rendererReady = false
+  private pendingResult: LookupResponse | null = null
+
+  // Class-property arrow so `this` is bound and we have a stable ref to
+  // register / unregister symmetrically from the constructor and destroy().
+  private readonly onRendererReady = (event: IpcMainEvent): void => {
+    if (!this.win || this.win.isDestroyed()) return
+    if (event.sender.id !== this.win.webContents.id) return
+    this.rendererReady = true
+    const pending = this.pendingResult
+    this.pendingResult = null
+    if (pending) {
+      event.sender.send('lookup-result', pending)
+    }
+  }
 
   constructor(dismissTimeoutMs: number = 8000) {
     this.dismissTimeoutMs = dismissTimeoutMs
+    ipcMain.on('popup-renderer-ready', this.onRendererReady)
   }
 
   updateDismissTimeout(ms: number): void {
@@ -37,8 +66,13 @@ export class PopupWindow {
     const position = this.computePosition(x, y)
     win.setPosition(position.x, position.y, false)
 
-    // Send the result to the renderer before showing
-    win.webContents.send('lookup-result', result)
+    if (this.rendererReady) {
+      win.webContents.send('lookup-result', result)
+    } else {
+      // Renderer hasn't signalled ready yet (first lookup, or page reloading).
+      // Queue the latest result; the renderer-ready handler above will replay it.
+      this.pendingResult = result
+    }
 
     if (!win.isVisible()) {
       win.showInactive() // show without stealing focus
@@ -63,6 +97,9 @@ export class PopupWindow {
    */
   destroy(): void {
     this.clearDismissTimer()
+    this.rendererReady = false
+    this.pendingResult = null
+    ipcMain.removeListener('popup-renderer-ready', this.onRendererReady)
     if (this.win && !this.win.isDestroyed()) {
       this.win.destroy()
     }
@@ -92,6 +129,16 @@ export class PopupWindow {
         contextIsolation: true,
         preload: preloadPath,
       },
+    })
+
+    // Reset handshake state for a freshly-created window
+    this.rendererReady = false
+    this.pendingResult = null
+
+    // Defensive: if the page is reloaded (e.g. DevTools reload, crash+restart),
+    // treat the renderer as un-ready until it signals ready once more.
+    this.win.webContents.on('did-start-loading', () => {
+      this.rendererReady = false
     })
 
     // Load the popup renderer

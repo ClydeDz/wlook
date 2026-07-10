@@ -16,6 +16,14 @@ export interface WlookConfig {
   theme: string
   popupSearch: PopupSearch
   popupDismissTimeoutMs: number
+  /**
+   * URL of the remote dictionary catalogue JSON the dashboard fetches
+   * in the "Browse Dictionaries" section. `null` means no remote
+   * catalogue is configured — the section then shows an empty state
+   * pointing the user at the local dictionaries folder for manual
+   * `.wlpack` drops.
+   */
+  catalogueUrl: string | null
   // Allow unknown keys to be preserved
   [key: string]: unknown
 }
@@ -32,6 +40,13 @@ export const DEFAULT_CONFIG: WlookConfig = {
     urlTemplate: 'https://www.google.com/search?q={query}',
   },
   popupDismissTimeoutMs: 8000,
+  // Upstream dictionary catalogue. Hard-coded so out-of-the-box installs
+  // work without first-time-setup; update this URL when migrating to a
+  // new manifest host. Users can override per-install in their
+  // %APPDATA%\Wlook\config.json. `null` falls back to the "drop .wlpack
+  // files into the dictionaries folder" empty state.
+  catalogueUrl:
+    'https://github.com/clydedz/wlook/releases/latest/download/packs-manifest.json',
 }
 
 /**

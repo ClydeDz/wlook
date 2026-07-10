@@ -11,6 +11,7 @@ interface PopupSearchConfig {
 interface WlookAPI {
   onDefinition(cb: (payload: { query: string; entry: DictionaryEntryResult | null }) => void): void
   openExternal(url: string): void
+  notifyReady?(): void
   getConfig?(): Promise<{ popupSearch?: PopupSearchConfig }>
 }
 
@@ -217,6 +218,10 @@ async function init(): Promise<void> {
 
   // Render initial empty shell until a definition arrives
   renderApp()
+
+  // Signal main that the renderer has registered its onDefinition listener.
+  // Main will then replay any lookup result sent while the page was loading.
+  window.wlook.notifyReady?.()
 }
 
 init()

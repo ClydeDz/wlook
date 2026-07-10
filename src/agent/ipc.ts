@@ -48,6 +48,7 @@ export function setupIPC(ctx: IPCContext): void {
       selectionCaptureMethod,
       installedPacks,
       preferredDialect: config.preferredDialect,
+      dictionariesDir: ctx.packManager.dictionariesDir,
     }
   })
 

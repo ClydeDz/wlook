@@ -42,6 +42,20 @@ async function main() {
     }
   }
 
+  // Copy popup CSS (referenced relatively by popup/index.html)
+  const popupCssSrc = join(root, 'src', 'popup', 'popup.css')
+  const popupCssDest = join(root, 'dist', 'popup', 'popup.css')
+  try {
+    await copyFile(popupCssSrc, popupCssDest)
+    console.log('Copied src/popup/popup.css -> dist/popup/popup.css')
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      console.warn('Warning: src/popup/popup.css not found, skipping.')
+    } else {
+      throw err
+    }
+  }
+
   // Copy dashboard HTML
   const dashboardHtmlSrc = join(root, 'src', 'dashboard', 'index.html')
   const dashboardHtmlDest = join(root, 'dist', 'dashboard', 'index.html')
@@ -51,6 +65,20 @@ async function main() {
   } catch (err) {
     if (err.code === 'ENOENT') {
       console.warn('Warning: src/dashboard/index.html not found, skipping.')
+    } else {
+      throw err
+    }
+  }
+
+  // Copy dashboard CSS (referenced relatively by dashboard/index.html)
+  const dashboardCssSrc = join(root, 'src', 'dashboard', 'dashboard.css')
+  const dashboardCssDest = join(root, 'dist', 'dashboard', 'dashboard.css')
+  try {
+    await copyFile(dashboardCssSrc, dashboardCssDest)
+    console.log('Copied src/dashboard/dashboard.css -> dist/dashboard/dashboard.css')
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      console.warn('Warning: src/dashboard/dashboard.css not found, skipping.')
     } else {
       throw err
     }
