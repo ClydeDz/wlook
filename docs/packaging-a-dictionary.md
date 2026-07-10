@@ -68,18 +68,18 @@ Run `node tools/build-dictionary/index.mjs --help` for the full option reference
 
 ### Options reference
 
-| Option | Required | Description |
-|--------|----------|-------------|
-| `--language` | yes | BCP-47 language tag (e.g. `en-US`, `de`, `fr`) |
-| `--display-name` | yes | Human-readable name shown in the dashboard |
-| `--version` | yes | Semver string for the pack |
-| `--license` | yes | SPDX license expression |
-| `--source` | yes | Attribution string stored in metadata |
-| `--out` | yes | Output path for the `.wlpack` file |
-| `--kaikki` | no | Path to Kaikki JSON Lines file |
-| `--wordnet` | no | Path to extracted WordNet `dict/` directory |
-| `--limit` | no | Maximum number of entries (useful for testing) |
-| `--verbose` | no | Print per-entry progress |
+| Option           | Required | Description                                    |
+| ---------------- | -------- | ---------------------------------------------- |
+| `--language`     | yes      | BCP-47 language tag (e.g. `en-US`, `de`, `fr`) |
+| `--display-name` | yes      | Human-readable name shown in the dashboard     |
+| `--version`      | yes      | Semver string for the pack                     |
+| `--license`      | yes      | SPDX license expression                        |
+| `--source`       | yes      | Attribution string stored in metadata          |
+| `--out`          | yes      | Output path for the `.wlpack` file             |
+| `--kaikki`       | no       | Path to Kaikki JSON Lines file                 |
+| `--wordnet`      | no       | Path to extracted WordNet `dict/` directory    |
+| `--limit`        | no       | Maximum number of entries (useful for testing) |
+| `--verbose`      | no       | Print per-entry progress                       |
 
 At least one of `--kaikki` or `--wordnet` must be provided.
 
@@ -130,13 +130,13 @@ Wiktionary content is licensed [CC BY-SA 4.0](https://creativecommons.org/licens
 
 Before publishing a pack derived from other sources, verify you have the right to redistribute derivative works under those terms.
 
--------------
+---
 
- catalogueUrl 
- 
- https://github.com/clydedz/wlook/releases/latest/download/packs-manifest.json
+catalogueUrl
 
-Then set  catalogueUrl  in  %APPDATA%\Wlook\config.json  to whichever URL you want users to hit.
+https://github.com/clydedz/wlook/releases/latest/download/packs-manifest.json
+
+Then set catalogueUrl in %APPDATA%\Wlook\config.json to whichever URL you want users to hit.
 
 ```
 // json
@@ -156,10 +156,12 @@ Then set  catalogueUrl  in  %APPDATA%\Wlook\config.json  to whichever URL you wa
 }
 ```
 
-1. Build your  .wlpack  with  tools/build-dictionary/  (see  docs/packaging-a-dictionary.md ).
-2. Compute its SHA-256:  sha256sum your-pack.wlpack .
-3. Upload  your-pack.wlpack  as a release asset named exactly  <id>-<version>.wlpack  (because  installPack  reads  dictionariesDir/<id>-<version>.wlpack  after install).
-4. Create  packs-manifest.json , paste your manifest URLs and hashes in.
-5. Attach  packs-manifest.json  as a release asset.
-6. Set  catalogueUrl  in  %APPDATA%\Wlook\config.json  to the URL from step 5.
+1. Build your .wlpack with tools/build-dictionary/ (see docs/packaging-a-dictionary.md ).
+2. Compute its SHA-256: sha256sum your-pack.wlpack .
+3. Upload your-pack.wlpack as a release asset named exactly <id>-<version>.wlpack (because installPack reads dictionariesDir/<id>-<version>.wlpack after install).
+4. Create packs-manifest.json , paste your manifest URLs and hashes in.
+5. Attach packs-manifest.json as a release asset.
+6. Set catalogueUrl in %APPDATA%\Wlook\config.json to the URL from step 5.
 7. Restart the agent, open the dashboard — the pack should appear in "Browse Dictionaries" with an Install button.
+
+downloaded https://kaikki.org/dictionary/rawdata.html
