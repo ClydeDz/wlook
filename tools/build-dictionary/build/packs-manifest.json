@@ -1,0 +1,21 @@
+{
+    "schemaVersion": 1,
+    "packs": [
+        {
+            "id": "en-GB",
+            "displayName": "English (United Kingdom)",
+            "version": "1.0.0",
+            "sizeMB": 12.4,
+            "language": "en",
+            "url": "https://github.com/clydedz/wlook/releases/latest/download/en-GB-1.0.0.wlpack"
+        },
+        {
+            "id": "en-US",
+            "displayName": "English (United States)",
+            "version": "1.0.0",
+            "sizeMB": 12.4,
+            "language": "en",
+            "url": "https://github.com/clydedz/wlook/releases/latest/download/en-US-1.0.0.wlpack"
+        }
+    ]
+}
