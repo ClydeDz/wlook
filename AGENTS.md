@@ -76,3 +76,18 @@ Stop and flag the change for review if it:
 - Changes the `.wlpack` SQLite schema (requires a migration for existing installs)
 - Changes types in `src/shared/ipc-contracts.ts` (both agent and renderer must be updated atomically)
 - Adds a dependency that ships native binaries (needs ARM64 prebuilds)
+
+## Commit co-author convention
+
+When any agent (human or AI) collaborates on a commit for this repo, the canonical trailing credit is a single line at the very end of the commit message body:
+
+`Co-Authored-By: Codebuff <noreply@codebuff.com>`
+
+Rules:
+- The canonical capitalisation (`Co-Authored-By` with the A and B capitalised) is a *stylistic* preference for this repo, not a load-bearing requirement — both GitHub's contributor graph and git's trailer parser are case-insensitive on the token. Use the canonical form anyway for consistency.
+- Email `noreply@codebuff.com` is intentionally a no-reply address — no inbound delivery is expected.
+- The product name is `Codebuff`. Never use `Freebuff`, `Buffy`, or any other variant.
+- Strip any prior `Co-Authored-By` / `Co-authored-by` line before appending the canonical one. Never stack two of them on the same commit.
+- Ordering: if a commit already carries a *human* co-author trailer (e.g. another person's `Co-authored-by:` line), the Codebuff line goes **after** theirs — humans' credit first, AI-assistance credit last. Never displace a human's credit.
+- When rewriting pushed history retroactively (e.g. to fix an earlier commit missed at first push), use `git filter-branch --msg-filter` with `sed -e "/^[Cc]o-[Aa]uthored-[Bb]y:/d"` followed by `printf "\nCo-Authored-By: Codebuff <noreply@codebuff.com>\n"`. Then force-push with `--force-with-lease`.
+- New commits should include the trailer from the start — do not rely on retroactive rewrites as a normal workflow.
