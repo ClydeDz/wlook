@@ -4,13 +4,13 @@ A lightweight Windows companion app that brings macOS-style "Look Up" to any tex
 
 ## Product images
 
-![alt text](image-2.png)
+![alt text](docs/images/image-2.png)
 
-![alt text](image-1.png)
+![alt text](docs/images/image-1.png)
 
-![alt text](image-4.png)
+![alt text](docs/images/image-4.png)
 
-![alt text](image-3.png)
+![alt text](docs/images/image-3.png)
 
 ## Credits
 
