@@ -132,14 +132,6 @@ function App() {
     <div id="app-root">
       <Header version={config.version} />
 
-      <SystemHealth status={status} />
-
-      <PreferredDialect
-        config={config}
-        installedPacks={status.installedPacks}
-        onSave={handleSaveDialect}
-      />
-
       <InstalledDictionaries
         packs={status.installedPacks}
         preferredId={status.preferredDialect}
@@ -153,7 +145,15 @@ function App() {
         dictionariesDir={status.dictionariesDir}
       />
 
+      <PreferredDialect
+        config={config}
+        installedPacks={status.installedPacks}
+        onSave={handleSaveDialect}
+      />
+
       <Settings config={config} onSave={handleSaveConfig} />
+
+      <SystemHealth status={status} />
 
       <About version={config.version} />
     </div>

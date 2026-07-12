@@ -46,7 +46,7 @@ export const DEFAULT_CONFIG: WlookConfig = {
   // %APPDATA%\Wlook\config.json. `null` falls back to the "drop .wlpack
   // files into the dictionaries folder" empty state.
   catalogueUrl:
-    'https://github.com/clydedz/wlook/releases/latest/download/packs-manifest.json',
+    'https://github.com/ClydeDz/wlook/releases/download/0.0.0/packs-manifest.json',
 }
 
 /**

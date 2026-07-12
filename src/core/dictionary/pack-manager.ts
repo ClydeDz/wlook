@@ -109,6 +109,10 @@ export class PackManager {
     pack: ManifestPack,
     onProgress: (pct: number) => void
   ): Promise<void> {
+    console.log(
+      `[PackManager] Installing pack "${pack.id}" (v${pack.version}, ${pack.sizeMB} MB) from ${pack.url}`
+    )
+
     await fs.mkdir(this.dictionariesDir, { recursive: true })
 
     const fileName = `${pack.id}-${pack.version}.wlpack`

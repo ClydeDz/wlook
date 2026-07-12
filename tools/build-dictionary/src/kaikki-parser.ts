@@ -2,7 +2,9 @@
  * kaikki-parser.ts
  *
  * Parses the Kaikki.org pre-parsed Wiktionary English JSONL dump.
- * Download: https://kaikki.org/dictionary/English/kaikki.org-dictionary-English.json
+ * Download: see https://kaikki.org/dictionary/rawdata.html — today's per-language
+ *   English file is `en-extract.jsonl` (+ `.gz`). (Kaikki marks per-language files
+ *   as DEPRECATED; raw Wiktextract + running wiktextract locally is the future path.)
  *
  * Each line is a JSON object (not a JSON array), one entry per line.
  */

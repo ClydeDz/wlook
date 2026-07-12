@@ -22,6 +22,12 @@ if (!gotLock) {
 
 // ── Windows taskbar identity ────────────────────────────────────────────────
 
+// ── Display name for Windows taskbar / Alt-Tab / notifications ────────────────
+// package.json has `"name": "wlook"` (lowercase, npm-style); we want Windows
+// to display "Wlook" everywhere it surfaces the app identity. setName() takes
+// precedence over the package.json name for Electron's app-name APIs.
+app.setName('Wlook')
+
 app.setAppUserModelId('com.wlook.app')
 
 // ── Mac: hide from Dock (it's a tray-only app) ──────────────────────────────

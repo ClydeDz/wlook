@@ -1,12 +1,12 @@
 {
   "kaikki_english": {
-    "description": "Kaikki.org pre-parsed Wiktionary English JSON",
-    "download_url": "https://kaikki.org/dictionary/English/kaikki.org-dictionary-English.json",
+    "description": "Kaikki.org pre-parsed Wiktionary English JSONL (per-language page). The canonical entry point is https://kaikki.org/dictionary/rawdata.html; today's per-language file is en-extract.jsonl (+ .gz). Note: Kaikki marks per-language post-processed files as DEPRECATED and is steering users toward the raw Wiktextract dump + running wiktextract locally; pin a snapshot if you wire this into CI.",
+    "download_url": "https://kaikki.org/dictionary/English/en-extract.jsonl",
     "license": "CC BY-SA 4.0",
     "attribution": "Wiktionary contributors via kaikki.org"
   },
   "open_english_wordnet": {
-    "description": "Open English WordNet",
+    "description": "Open English WordNet — used as lower-priority example backfill for entries where the Kaikki sense has no example.",
     "github": "globalwordnet/english-wordnet",
     "license": "CC BY 4.0",
     "attribution": "English WordNet contributors"

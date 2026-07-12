@@ -12,12 +12,8 @@
     "rootDir": "src",
     "noEmit": true,
     "declaration": true,
-    "sourceMap": true,
-    "baseUrl": ".",
-    "paths": {
-      "@shared/*": ["src/shared/*"],
-      "@core/*": ["src/core/*"]
-    }
+    "ignoreDeprecations": "5.0",
+    "sourceMap": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "tools", "tests"]

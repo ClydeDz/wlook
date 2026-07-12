@@ -12,7 +12,7 @@ interface WlookAPI {
   onDefinition(cb: (payload: { query: string; entry: DictionaryEntryResult | null }) => void): void
   openExternal(url: string): void
   notifyReady?(): void
-  getConfig?(): Promise<{ popupSearch?: PopupSearchConfig }>
+  getConfig?(): Promise<{ popupSearch?: PopupSearchConfig; theme?: 'default' | 'dark' }>
 }
 
 declare global {
@@ -33,6 +33,20 @@ const DEFAULT_SEARCH_CONFIG: PopupSearchConfig = {
   label: 'Search Google',
   urlTemplate: 'https://www.google.com/search?q={query}',
 }
+
+/**
+ * Inlined popup logo. Lives in the same DOM tree as the rest of the popup
+ * (unlike `<img src="…svg">` which loads the SVG in an isolated document
+ * where `currentColor` can't see the host page's CSS colour). As a result,
+ * setting `color: var(--logo-color)` on the parent `.card__logo` cascades
+ * into the SVG's `stroke="currentColor"` and re-tints it per theme.
+ */
+const POPUP_LOGO_SVG: TemplateResult = html`
+  <svg viewBox="0 0 179 179" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M29.8333 145.438V33.5625C29.8333 28.6173 31.7978 23.8747 35.2946 20.3779C38.7913 16.8811 43.534 14.9167 48.4792 14.9167H141.708C143.686 14.9167 145.583 15.7025 146.982 17.1012C148.381 18.4999 149.167 20.3969 149.167 22.375V156.625C149.167 158.603 148.381 160.5 146.982 161.899C145.583 163.298 143.686 164.083 141.708 164.083H48.4792C43.534 164.083 38.7913 162.119 35.2946 158.622C31.7978 155.125 29.8333 150.383 29.8333 145.438ZM29.8333 145.438C29.8333 140.492 31.7978 135.75 35.2946 132.253C38.7913 128.756 43.534 126.792 48.4792 126.792H149.167" stroke="currentColor" stroke-width="14.9167" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M51 44L70.5 101L89.5 62.5L109 101L128 44" stroke="currentColor" stroke-width="14.9167" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+`
 
 let state: AppState = {
   query: '',
@@ -92,6 +106,7 @@ function entryTemplate(entry: DictionaryEntryResult): TemplateResult {
   return html`
     <div class="card">
       <div class="card__header">
+        <span class="card__logo">${POPUP_LOGO_SVG}</span>
         <span class="card__word">${entry.headword}</span>
         ${entry.pos ? html`<span class="card__pos">${entry.pos}</span>` : nothing}
       </div>
@@ -124,6 +139,10 @@ function entryTemplate(entry: DictionaryEntryResult): TemplateResult {
 function emptyTemplate(query: string): TemplateResult {
   return html`
     <div class="card">
+      <div class="card__header">
+        <span class="card__logo">${POPUP_LOGO_SVG}</span>
+        <span class="card__word"></span>
+      </div>
       <div class="card__empty">
         No definition found for
         <span class="card__empty-query">&ldquo;${query}&rdquo;</span>
@@ -201,8 +220,15 @@ async function loadConfig(): Promise<void> {
     if (config?.popupSearch) {
       state = { ...state, searchConfig: config.popupSearch }
     }
+    // Apply popup theme: 'dark' forces the dark surface; anything else
+    // (including 'default' or a failure) defers to OS preference via the
+    // CSS media query in popup.css. Setting data-theme on <html> lets the
+    // CSS rules scope accordingly.
+    const theme = config?.theme ?? 'default'
+    document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'default')
   } catch {
-    // fall through — use defaults
+    // Fall through — ensure data-theme is set so CSS rules resolve predictably.
+    document.documentElement.setAttribute('data-theme', 'default')
   }
 }
 

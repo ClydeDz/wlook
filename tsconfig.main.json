@@ -1,15 +1,14 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    // Override the inherited `noEmit: true` from tsconfig.json — the main-process
+    // bundle MUST emit to dist/ for Electron to load it at runtime. tsbuildinfo
+    // + dashboard renderer bundles are unaffected by this override.
+    "noEmit": false,
     "outDir": "dist",
     "rootDir": "src",
     "module": "commonjs",
-    "target": "ES2022",
-    "baseUrl": "src",
-    "paths": {
-      "@shared/*": ["shared/*"],
-      "@core/*": ["core/*"]
-    }
+    "target": "ES2022"
   },
   "include": ["src/agent/**/*", "src/core/**/*", "src/shared/**/*"]
 }

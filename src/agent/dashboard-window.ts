@@ -1,8 +1,20 @@
-import { BrowserWindow, screen } from 'electron'
+import { BrowserWindow, screen, nativeImage } from 'electron'
 import * as path from 'path'
+import { existsSync } from 'fs'
 
 const DASHBOARD_WIDTH = 900
 const DASHBOARD_HEIGHT = 620
+
+/**
+ * Resolves the dashboard window icon from assets/icons/app.ico.
+ * Falls back to undefined (Electron default) if the file is missing so the
+ * agent still starts during early development before icons are produced.
+ */
+function loadDashboardIcon(): Electron.NativeImage | undefined {
+  const iconPath = path.join(__dirname, '..', '..', 'assets', 'icons', 'app.ico')
+  if (!existsSync(iconPath)) return undefined
+  return nativeImage.createFromPath(iconPath)
+}
 
 /**
  * DashboardWindow manages a single standard-chrome BrowserWindow for the
@@ -32,6 +44,7 @@ export class DashboardWindow {
       x,
       y,
       title: 'Wlook',
+      icon: loadDashboardIcon(),
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,

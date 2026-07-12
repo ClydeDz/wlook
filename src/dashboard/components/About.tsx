@@ -18,13 +18,13 @@ export function About({ version }: Props) {
           <span class="about-row__value">
             <a
               class="link"
-              href="https://github.com/wlook/wlook"
+              href="https://github.com/clydedz/wlook"
               onClick={(e) => {
                 e.preventDefault()
-                window.wlook.openExternal('https://github.com/wlook/wlook')
+                window.wlook.openExternal('https://github.com/clydedz/wlook')
               }}
             >
-              github.com/wlook/wlook
+              github.com/clydedz/wlook
             </a>
           </span>
         </div>

@@ -1,4 +1,4 @@
-import { ipcMain, shell } from 'electron'
+import { app, ipcMain, shell } from 'electron'
 import type { WlookConfig } from '../core/config'
 import { writeConfig } from '../core/config'
 import { getLemmatizer } from '../core/lemma/index'
@@ -54,8 +54,12 @@ export function setupIPC(ctx: IPCContext): void {
 
   // ── Config ───────────────────────────────────────────────────────────────
 
-  ipcMain.handle('get-config', (): WlookConfig => {
-    return ctx.getConfig()
+  ipcMain.handle('get-config', () => {
+    // Augment WlookConfig with `version` (read from the running app's
+    // package.json via `app.getVersion()`) so the dashboard header can
+    // render "Wlook v<version>". WlookConfig's index signature makes this
+    // shape-additive without breaking existing callers.
+    return { ...ctx.getConfig(), version: app.getVersion() }
   })
 
   ipcMain.handle('update-config', async (_event, patch: Partial<WlookConfig>): Promise<void> => {
@@ -139,6 +143,7 @@ export function setupIPC(ctx: IPCContext): void {
   // ── Pack management ───────────────────────────────────────────────────────
 
   ipcMain.handle('install-pack', async (event, pack: ManifestPack): Promise<void> => {
+    console.log(`[ipc] install-pack received: "${pack.id}" from ${pack.url}`)
     const sender = event.sender
 
     await ctx.packManager.installPack(pack, (pct: number) => {

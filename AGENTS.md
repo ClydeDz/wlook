@@ -2,7 +2,7 @@
 
 ## What this app is
 
-Wlook is an offline dictionary lookup app for Windows. A background Electron tray agent runs at all times. When the user selects text and presses the global hotkey (default: `Ctrl+Shift+D`), a small frameless popup appears near the cursor showing the word's definition, pronunciation (IPA), part of speech, and an example sentence — sourced from a local SQLite dictionary pack. No cloud call, no visible window while idle.
+Wlook is an offline dictionary lookup app for Windows. A background Electron tray agent runs at all times. When the user selects text and presses the global hotkey (default: `CommandOrControl+Shift+D`), a small frameless popup appears near the cursor showing the word's definition, pronunciation (IPA), part of speech, and an example sentence — sourced from a local SQLite dictionary pack. No cloud call, no visible window while idle.
 
 ## Process model
 
@@ -16,11 +16,11 @@ wlook-agent  (Electron main — always running)
   ├── globalShortcut
   ├── IPC router
   ├── DictionaryResolver + PackManager
-  ├── PopupWindow  (frameless BrowserWindow, shown per lookup)
+  ├── PopupWindow  (frameless BrowserWindow, singleton — hidden between lookups)
   └── DashboardWindow  (opened on demand, closed to release renderer)
 ```
 
-`wlook-agent` is the only always-running process. `wlook-dashboard` is a renderer window opened inside the same Electron process when the user opens the dashboard; closing it releases its renderer. The popup is a separate frameless `BrowserWindow` created for each lookup and destroyed when dismissed.
+`wlook-agent` is the only always-running process. `wlook-dashboard` is a renderer window opened inside the same Electron process when the user opens the dashboard; closing it releases its renderer. The popup is a single frameless `BrowserWindow` reused across lookups — it's created lazily on first use and hidden (not destroyed) between lookups. A `popup-renderer-ready` handshake queues the latest lookup until the popup's `onDefinition` listener is registered, so the first message isn't lost to a not-yet-registered renderer.
 
 ## Where things live
 
@@ -70,7 +70,7 @@ node scripts/create-fixture-db.mjs  # recreate test fixture SQLite DB
 ## Things to ask before changing
 
 Stop and flag the change for review if it:
-- Risks the memory budget (§7 of README — 150 MB hard cap, 250 ms cold-lookup hard cap)
+- Risks the memory budget (150 MB hard cap, 250 ms cold-lookup hard cap)
 - Adds a new always-running background process or thread
 - Fires a network call without direct user action
 - Changes the `.wlpack` SQLite schema (requires a migration for existing installs)

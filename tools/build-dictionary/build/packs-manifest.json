@@ -7,7 +7,7 @@
             "version": "1.0.0",
             "sizeMB": 12.4,
             "language": "en",
-            "url": "https://github.com/clydedz/wlook/releases/latest/download/en-GB-1.0.0.wlpack"
+            "url": "https://github.com/ClydeDz/wlook/releases/download/0.0.0/en-GB-1.0.0.wlpack"
         },
         {
             "id": "en-US",
@@ -15,7 +15,7 @@
             "version": "1.0.0",
             "sizeMB": 12.4,
             "language": "en",
-            "url": "https://github.com/clydedz/wlook/releases/latest/download/en-US-1.0.0.wlpack"
+            "url": "https://github.com/ClydeDz/wlook/releases/download/0.0.0/en-US-1.0.0.wlpack"
         }
     ]
 }

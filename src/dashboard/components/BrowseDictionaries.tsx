@@ -81,6 +81,10 @@ export function BrowseDictionaries({ installedIds, onInstall, catalogueUrl, dict
   }, [catalogueUrl])
 
   async function handleInstall(pack: ManifestPack) {
+    // Diagnostic log — surfaces in dashboard DevTools so we can tell at a glance
+    // whether the click reached the renderer at all.
+    console.log(`[BrowseDictionaries] Install clicked: "${pack.id}" from ${pack.url}`)
+
     setInstalling(prev => new Map(prev).set(pack.id, 0))
 
     const progressHandler = (percent: number) => {

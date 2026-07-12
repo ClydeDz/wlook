@@ -5,24 +5,60 @@
   --text-muted: #86868b;
   --text-example: #515154;
   --accent: #0071e3;
+  --logo-color: var(--accent);
+  --link-color: var(--accent);
   --pos-bg: #f0f0f5;
   --pos-text: #515154;
   --shadow: 0 8px 32px rgba(0,0,0,0.14), 0 1px 4px rgba(0,0,0,0.08);
   --radius: 12px;
   --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}/*
+ * Theme switching is driven by the `data-theme` attribute on <html>,
+ * which popup.ts sets from the user's Settings.theme choice:
+ *   - data-theme="dark"     → forces the dark surface regardless of OS
+ *   - data-theme="default"  → defers to the OS preference (below)
+ *   - no attribute / unset  → originally fell back to OS; popup.ts always
+ *                             sets "default" on load, so this is rare.
+ */
+
+/* User-explicit dark: force dark even when the OS is light. */
+:root[data-theme="dark"] {
+  --bg: #1c1c1e;
+  --border: #38383a;
+
+  --text: #f2f2f7;
+  --text-muted: #98989d;
+  --text-example: #aeaeb2;
+
+  --accent: #0a84ff;
+  --logo-color: #ffffff;
+  --link-color: #ffffff;
+
+  --pos-bg: #2c2c2e;
+  --pos-text: #98989d;
+
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
+/* Default mode: follow OS preference, unless user explicitly chose "light". */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #1c1c1e;
     --border: #38383a;
+
     --text: #f2f2f7;
     --text-muted: #98989d;
     --text-example: #aeaeb2;
+
     --accent: #0a84ff;
+  --logo-color: #ffffff;
+    --link-color: #ffffff;
+  --link-color: #ffffff;
+
     --pos-bg: #2c2c2e;
     --pos-text: #98989d;
-    --shadow: 0 8px 32px rgba(0,0,0,0.5);
+
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   }
 }
 
@@ -62,7 +98,19 @@ body {
   flex-direction: column;
 }
 
-/* ── Header row: word + POS badge ── */
+/* ── Header row: logo + word + POS badge ── */
+.card__logo {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-right: 8px;
+  margin-top: 1px;
+  /* Logo colour cascades into the inlined SVG via `currentColor` on the
+     strokes. Light mode follows the brand accent; dark mode is explicit
+     white for high contrast against the dark surface. */
+  color: var(--logo-color);
+}
+
 .card__header {
   display: flex;
   align-items: flex-start;
@@ -171,12 +219,13 @@ body {
   gap: 3px;
   font-size: 12px;
   font-weight: 500;
-  color: var(--accent);
+  color: var(--link-color);
   text-decoration: none;
   white-space: nowrap;
   padding: 3px 6px;
   border-radius: 6px;
-  transition: background 0.12s ease, opacity 0.12s ease;
+  transition: background 0.12s ease, opacity 0.12s ease,
+              text-decoration-color 0.12s ease;
   cursor: pointer;
   background: none;
   border: none;
@@ -184,8 +233,14 @@ body {
   outline: none;
 }
 
-.card__google-link:hover {
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+.card__google-link:hover,
+.card__google-link:focus-visible {
+  background: color-mix(in srgb, var(--link-color) 10%, transparent);
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--link-color);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
 .card__google-link:focus-visible {

@@ -108,7 +108,7 @@ You can install a `.wlpack` file that you have built yourself or obtained from a
 
 1. Build a `.wlpack` file with `tools/build-dictionary` (see `docs/packaging-a-dictionary.md`).
 2. Drop the `.wlpack` file into `%APPDATA%\Wlook\dictionaries\` (Windows) or `~/.wlook/dictionaries/` (dev).
-3. Restart the agent (or use the dashboard's "Reload packs" button).
+3. Restart the agent. There is no live "Reload packs" button today — restart picks up the new file via `PackManager.scanInstalled()`.
 4. The pack appears in the dashboard automatically under "Installed".
 
 The pack's `metadata.language` value determines which lookup group it belongs to. A pack with `language = en-XX` will be searched alongside `en-GB` and `en-US` when those are installed.
