@@ -3,7 +3,7 @@
 All notable changes to Wlook will be documented in this file.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 
-## [0.2.0] - 2026-07-12
+## [0.2.0]
 
 ### Added
 
@@ -14,6 +14,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 - `--link-color` CSS variable for the popup's "Search on Google" footer link. Defaults to `var(--accent)` in light mode; both dark-mode selectors override it to `#ffffff`.
 - Hover/focus-visible state for `.card__google-link` now draws a 1 px dotted underline 3 px below the text, in `var(--link-color)` (so white on dark, blue on light).
 - `app.setName('Wlook')` call in `src/agent/main.ts`, placed before `app.setAppUserModelId('com.wlook.app')`. Combined with the new `productName` in `package.json`, this ensures "Wlook" appears in userData folder naming, login-item metadata, and any Electron code path that derives a display name from `app.getName()`.
+- `LICENSE` file at the repo root containing the MIT license text, copyright Clyde D'Souza, 2024–2026. The codebase had no prior license declaration, so by default no one had explicit permission to copy or modify it; adding MIT strictly improves the situation.
+- `"license": "MIT"` field in `package.json` so package managers, GitHub's repo header detection, and downstream tooling can identify the license without parsing the LICENSE file.
 
 ### Changed
 

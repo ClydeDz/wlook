@@ -4,6 +4,7 @@
   "version": "0.2.0",
   "description": "Offline dictionary lookup — brings macOS Look Up to Windows",
   "main": "dist/agent/main.js",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "build:main": "tsc -p tsconfig.main.json",
