@@ -9,7 +9,16 @@ export interface PopupSearch {
 
 export interface WlookConfig {
   preferredDialect: string
-  hotkey: string
+  /**
+   * Hotkey accelerator. Either an Electron-prefix string
+   * (`'CommandOrControl+Shift+D'`) or `null` to explicitly disable
+   * the hotkey without flipping `hotkeyEnabled`. The `null` form is
+   * documented in `docs/customisation.md` §15.4 and predates the
+   * `hotkeyEnabled` toggle; `mergeConfig` preserves it verbatim so a
+   * user who set `null` does not have their hotkey silently re-bound
+   * to the default on the next read.
+   */
+  hotkey: string | null
   hotkeyEnabled: boolean
   startOnLogin: boolean
   clipboardFallback: boolean
@@ -34,7 +43,15 @@ export const DEFAULT_CONFIG: WlookConfig = {
   hotkeyEnabled: true,
   startOnLogin: true,
   clipboardFallback: false,
-  theme: 'default',
+  // Popup theme. Valid built-in values:
+  //   'system' → follow OS light/dark preference
+  //   'light'  → force the light surface regardless of OS
+  //   'dark'   → force the dark surface regardless of OS
+  // Unknown strings are accepted at the type level (preserving the original
+  // freeform shape for future custom themes) but the dashboard UI narrows
+  // the choice to these three. Migrated from the older 'default' alias;
+  // see readConfig() below.
+  theme: 'system',
   popupSearch: {
     label: 'Search on Google',
     urlTemplate: 'https://www.google.com/search?q={query}',
@@ -71,6 +88,130 @@ function getConfigPath(): string {
 }
 
 /**
+ * Canonicalises an Electron accelerator string by collapsing every
+ * variant of the platform's primary modifier to `CommandOrControl`.
+ * Electron treats `Ctrl`, `Control`, `Cmd, `Command` as aliases for the
+ * same physical key depending on platform (`Ctrl`/`Control` on
+ * Windows/Linux, `Cmd`/`Command` on macOS); `CommandOrControl` is
+ * Electron's portable prefix that resolves to the right one for the
+ * running OS.
+ *
+ * Rules (in order):
+ *   - Empty / whitespace-only input → ''.
+ *   - Tokenise on `+`, trim each piece, drop empties.
+ *   - Primary-modifier tokens (`Ctrl` / `Control` / `Cmd` / `Command`,
+ *     case-insensitive) are rewritten to `CommandOrControl`.
+ *   - Known multi-character modifiers (`Meta`, `Alt`, `Shift`,
+ *     `CommandOrControl`) are title-cased to their canonical names.
+ *   - Single-character action keys (`a`, `b`, …, `0`, …) are upper-cased.
+ *   - Other multi-character keys (`Enter`, `End`, `PageUp`, …) are
+ *     preserved verbatim.
+ *   - Duplicate tokens are removed, keeping the first occurrence.
+ *
+ * The function is pure and exported so the migration rules can be unit
+ * tested without touching the filesystem (see
+ * `tests/unit/core/config.test.ts`).
+ */
+export function normaliseHotkey(hotkey: string): string {
+  if (hotkey.trim() === '') return ''
+  const tokens = hotkey
+    .split('+')
+    .map((t) => t.trim())
+    .filter((t) => t.length > 0)
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const raw of tokens) {
+    const lower = raw.toLowerCase()
+    let canonical: string
+    if (lower === 'ctrl' || lower === 'control' || lower === 'cmd' || lower === 'command') {
+      canonical = 'CommandOrControl'
+    } else if (lower === 'meta') {
+      canonical = 'Meta'
+    } else if (lower === 'alt') {
+      canonical = 'Alt'
+    } else if (lower === 'shift') {
+      canonical = 'Shift'
+    } else if (raw.length === 1) {
+      canonical = raw.toUpperCase()
+    } else {
+      canonical = raw
+    }
+    if (!seen.has(canonical)) {
+      seen.add(canonical)
+      out.push(canonical)
+    }
+  }
+  return out.join('+')
+}
+
+/**
+ * Pure merge of a raw config object with DEFAULT_CONFIG.
+ *
+ * Extracted from `readConfig` so tests can exercise the merge rules —
+ * including the legacy `theme: "default" → "system"` migration and the
+ * canonical hotkey prefix rewrite — without touching the filesystem.
+ * Production code only ever calls this via `readConfig`, but it is
+ * exported because the test suite asserts the migration rules directly
+ * (a test that round-trips through a real file would be coupled to the
+ * running platform's `getConfigDir`).
+ *
+ * Behaviour:
+ * - Default values are filled in for any key missing from `raw`.
+ * - All keys from `raw` (including unknown ones) override defaults,
+ *   preserving them through the merge.
+ * - The nested `popupSearch` object is deep-merged.
+ * - `theme` is normalised: legacy `'default'` (the pre-0.3 alias for
+ *   "follow OS") becomes `'system'`; any other non-empty string is
+ *   passed through.
+ * - `hotkey` is normalised through `normaliseHotkey`: literal
+ *   `Ctrl` / `Control` / `Cmd` / `Command` tokens are rewritten to the
+ *   canonical Electron `CommandOrControl` prefix while preserving
+ *   modifiers like `Meta` / `Alt` / `Shift`. Legacy config.json entries
+ *   written before this rule shipped (typically `"Ctrl+Shift+D"` from
+ *   hand-edits or the pre-canonical recorder output) are silently
+ *   migrated on next read.
+ */
+export function mergeConfig(raw: Record<string, unknown>): WlookConfig {
+  // Treat 'default' AND undefined (key absent from config.json) as
+  // "follow the OS" → 'system'. Without the explicit undefined branch,
+  // a future change to DEFAULT_CONFIG.theme would silently change the
+  // behaviour for users with no `theme` key in their config.
+  const normalisedTheme =
+    raw.theme === 'default' || raw.theme === undefined
+      ? 'system'
+      : (raw.theme as string)
+
+  // `raw.hotkey` may be missing, a string, `null`, or some other
+  // non-string type. Strings pass through `normaliseHotkey` so
+  // pre-canonical `Ctrl` / `Control` / `Cmd` / `Command` literals are
+  // silently migrated to `CommandOrControl`. `null` is preserved
+  // verbatim because `docs/customisation.md` §15.4 documents it as a
+  // legacy disable marker (predating `hotkeyEnabled`); rewriting it to
+  // the default would silently re-enable a hotkey the user explicitly
+  // disabled. Anything else (e.g. an accidentally-numbered value from
+  // a hand-edit) falls back to `DEFAULT_CONFIG.hotkey`.
+  const normalisedHotkey =
+    raw.hotkey === null
+      ? null
+      : typeof raw.hotkey === 'string'
+        ? normaliseHotkey(raw.hotkey)
+        : DEFAULT_CONFIG.hotkey
+
+  return {
+    ...DEFAULT_CONFIG,
+    ...raw,
+    theme: normalisedTheme,
+    hotkey: normalisedHotkey,
+    popupSearch: {
+      ...DEFAULT_CONFIG.popupSearch,
+      ...(typeof raw.popupSearch === 'object' && raw.popupSearch !== null
+        ? (raw.popupSearch as Partial<PopupSearch>)
+        : {}),
+    },
+  }
+}
+
+/**
  * Reads config.json and deep-merges with defaults.
  * Unknown keys from the file are preserved.
  * If the file does not exist, returns a copy of DEFAULT_CONFIG.
@@ -91,20 +232,7 @@ export async function readConfig(): Promise<WlookConfig> {
     // File not found — use defaults
   }
 
-  // Shallow-merge: defaults first, then file values override, preserving unknown keys
-  const merged: WlookConfig = {
-    ...DEFAULT_CONFIG,
-    ...raw,
-    // Deep-merge nested popupSearch so partial overrides work
-    popupSearch: {
-      ...DEFAULT_CONFIG.popupSearch,
-      ...(typeof raw.popupSearch === 'object' && raw.popupSearch !== null
-        ? (raw.popupSearch as Partial<PopupSearch>)
-        : {}),
-    },
-  }
-
-  return merged
+  return mergeConfig(raw)
 }
 
 /**

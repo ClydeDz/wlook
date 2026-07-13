@@ -15,10 +15,20 @@
 }/*
  * Theme switching is driven by the `data-theme` attribute on <html>,
  * which popup.ts sets from the user's Settings.theme choice:
- *   - data-theme="dark"     → forces the dark surface regardless of OS
- *   - data-theme="default"  → defers to the OS preference (below)
+ *   - data-theme="light"   → forces the light surface regardless of OS
+ *   - data-theme="dark"    → forces the dark surface regardless of OS
+ *   - data-theme="default" → defers to the OS preference (below)
  *   - no attribute / unset  → originally fell back to OS; popup.ts always
- *                             sets "default" on load, so this is rare.
+ *                             sets one of the above on load, so this is rare.
+ *
+ * Why there is no `:root[data-theme="light"]` block:
+ *   Cascade order is: base `:root` (light tokens) → `:root[data-theme="dark"]`
+ *   (dark tokens, explicit) → `@media (prefers-color-scheme: dark) {
+ *   :root:not([data-theme="light"]) }` (dark tokens, OS-follow). The OS
+ *   branch is *negated* by explicit 'light', so the dark tokens don't
+ *   apply on a dark-OS user who picks 'light', and the base `:root`
+ *   light tokens win naturally. Adding a `:root[data-theme="light"]`
+ *   block would just re-state the base tokens and is unnecessary.
  */
 
 /* User-explicit dark: force dark even when the OS is light. */

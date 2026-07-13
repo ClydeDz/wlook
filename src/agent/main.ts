@@ -6,8 +6,8 @@ import { HotkeyManager } from './hotkey'
 import { PopupWindow } from './popup-window'
 import { DashboardWindow } from './dashboard-window'
 import { createTray } from './tray'
-import { setupIPC } from './ipc'
-import { captureCurrentSelection } from './selection-capture'
+import { setupIPC, buildDashboardStatus, pushStatusToRenderers } from './ipc'
+import { SelectionCapture } from './selection-capture'
 import * as path from 'path'
 import type { Tray } from 'electron'
 
@@ -42,6 +42,7 @@ let hotkeyManager: HotkeyManager
 let popupWindow: PopupWindow
 let dashboardWindow: DashboardWindow
 let packManager: PackManager
+let selectionCapture: SelectionCapture
 
 // ── App lifecycle ────────────────────────────────────────────────────────────
 
@@ -90,6 +91,12 @@ async function initApp(): Promise<void> {
   hotkeyManager = new HotkeyManager()
   hotkeyManager.onTriggered(handleHotkeyTrigger)
 
+  // Persistent SelectionCapture — owns the cached `lastMethod` that the
+  // dashboard reads via `get-status`. Replaced wholesale on `updateConfig`
+  // via `selectionCapture.updateConfig()` rather than constructing a new
+  // instance, so the runtime-method cache survives across user edits.
+  selectionCapture = new SelectionCapture(config)
+
   if (config.hotkeyEnabled && config.hotkey) {
     const ok = hotkeyManager.register(config.hotkey)
     if (!ok) {
@@ -102,6 +109,7 @@ async function initApp(): Promise<void> {
     getConfig: () => config,
     setConfig: async (updated: WlookConfig) => {
       config = updated
+      selectionCapture.updateConfig(updated)
       await writeConfig(updated)
 
       // Re-apply login item setting
@@ -110,6 +118,8 @@ async function initApp(): Promise<void> {
     packManager,
     hotkeyManager,
     popupWindow,
+    getSelectionCaptureMethod: () => selectionCapture.getLastMethod(),
+    broadcastStatus,
   })
 
   // 7. Auto-launch on login (Windows only — setLoginItemSettings is a no-op on Mac)
@@ -126,8 +136,35 @@ async function initApp(): Promise<void> {
 
 // ── Hotkey trigger ───────────────────────────────────────────────────────────
 
+/**
+ * Builds a fresh `DashboardStatus` from the live agent state and pushes
+ * it to every open `BrowserWindow`. Declared at module level so both the
+ * `setupIPC` closure and `handleHotkeyTrigger` share a single source of
+ * truth instead of inlining the IPC plumbing per call site.
+ */
+async function broadcastStatus(): Promise<void> {
+  const ipcCtx = {
+    getConfig: () => config,
+    setConfig: async (_updated: WlookConfig) => {},
+    packManager,
+    hotkeyManager,
+    popupWindow,
+    getSelectionCaptureMethod: () => selectionCapture.getLastMethod(),
+    broadcastStatus: async () => {},
+  }
+  const status = await buildDashboardStatus(ipcCtx)
+  pushStatusToRenderers(status)
+}
+
 async function handleHotkeyTrigger(): Promise<void> {
-  const selected = await captureCurrentSelection(config)
+  const selected = await selectionCapture.capture()
+
+  // Push the (possibly updated) selection-capture method to every open
+  // renderer BEFORE the `!selected` bail so a hotkey press that found
+  // no selection still propagates `'unavailable'` to the dashboard's
+  // System Health row. The dashboard's user-visible green/amber/red
+  // dot would otherwise stop updating on failed lookups.
+  await broadcastStatus()
 
   if (!selected) {
     console.log('[main] Hotkey fired but no selection detected')

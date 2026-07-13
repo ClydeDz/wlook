@@ -9,6 +9,32 @@ type WlookConfigPatch = Partial<WlookConfig>
 // The dashboard's BrowseDictionaries attaches a fresh listener per install
 // (one pack id at a time) and removes it on completion. We keep the handler
 // reference keyed by packId so the remove side is symmetric.
+// Status-update listeners registry — single-stream, but kept as a Set
+// so the API is symmetric with add/remove and future popup consumers
+// can subscribe without an IPC contract change. Each handler is
+// invoked on every `'status-update'` event the main process pushes.
+const statusUpdateHandlers = new Set<(status: DashboardStatus) => void>()
+
+// Bound once at module load; iterates the Set under whatever handlers
+// are currently registered. Decoupling the IPC subscription from
+// individual handlers means add/remove is symmetric without tearing
+// down listeners on every consumer.
+const onIpcStatusUpdate = (
+  _event: IpcRendererEvent,
+  status: DashboardStatus
+): void => {
+  for (const handler of statusUpdateHandlers) {
+    try {
+      handler(status)
+    } catch (err) {
+      // Isolate handler failures so one bad subscriber doesn't break
+      // the broadcast fan-out for the others.
+      console.error('[preload] status-update handler threw:', err)
+    }
+  }
+}
+ipcRenderer.on('status-update', onIpcStatusUpdate)
+
 const installProgressHandlers = new Map<
   string,
   (event: IpcRendererEvent, data: { packId: string; pct: number }) => void
@@ -67,6 +93,18 @@ const wlookApi = {
       ipcRenderer.removeListener('install-progress', handler)
       installProgressHandlers.delete(packId)
     }
+  },
+
+  // Dashboard subscribes on mount and clears `setStatus` with the
+  // pushed payload each time. The IPC subscription stays alive at
+  // module scope; add/remove just edits the handler Set, so unmount
+  // doesn't tear the underlying listener down.
+  onStatusUpdate: (cb: (status: DashboardStatus) => void): void => {
+    statusUpdateHandlers.add(cb)
+  },
+
+  offStatusUpdate: (cb: (status: DashboardStatus) => void): void => {
+    statusUpdateHandlers.delete(cb)
   },
 
   // ── Popup-only ──────────────────────────────────────────────────────────

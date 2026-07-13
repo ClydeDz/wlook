@@ -1,7 +1,7 @@
 {
   "name": "wlook",
   "productName": "Wlook",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Offline dictionary lookup — brings macOS Look Up to Windows",
   "main": "dist/agent/main.js",
   "license": "MIT",

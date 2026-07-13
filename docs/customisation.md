@@ -1,6 +1,23 @@
 # Customisation Guide
 
-Everything a power user is likely to change lives under `assets/` or is configurable via `config.json` at `%APPDATA%\Wlook\config.json` (Windows) or `~/.wlook/config.json` (dev/macOS). No rebuild is required for config changes; a restart of the agent picks them up.
+Everything a power user is likely to change lives under `assets/` or is configurable via `config.json` at `%APPDATA%\Wlook\config.json` (Windows) or `~/.wlook/config.json` (dev/macOS). No rebuild is required for config changes; a restart of the agent picks them up. Here is what the full `config.json` file might look like.
+
+```json
+{
+  "preferredDialect": "en-GB",
+  "hotkey": "CommandOrControl+Shift+D",
+  "hotkeyEnabled": true,
+  "startOnLogin": false,
+  "clipboardFallback": true,
+  "theme": "light",
+  "popupSearch": {
+    "label": "Search Google",
+    "urlTemplate": "https://www.google.com/search?q={query}"
+  },
+  "popupDismissTimeoutMs": 8000,
+  "catalogueUrl": "https://github.com/ClydeDz/wlook/releases/download/0.0.0/packs-manifest.json"
+}
+```
 
 ---
 
@@ -8,11 +25,11 @@ Everything a power user is likely to change lives under `assets/` or is configur
 
 Icon files live in `assets/icons/`. Replace a file in-place with one of the same name, then rebuild and repackage.
 
-| File | Used for | Recommended sizes |
-|------|----------|-------------------|
-| `tray.ico` | System tray icon | 16, 24, 32, 48 px |
-| `app.ico` | Installer, Start Menu, taskbar | 16, 32, 48, 64, 128, 256 px |
-| `popup-logo.svg` | Small mark in popup header | Vector — renders at ~20 px |
+| File             | Used for                       | Recommended sizes           |
+| ---------------- | ------------------------------ | --------------------------- |
+| `tray.ico`       | System tray icon               | 16, 24, 32, 48 px           |
+| `app.ico`        | Installer, Start Menu, taskbar | 16, 32, 48, 64, 128, 256 px |
+| `popup-logo.svg` | Small mark in popup header     | Vector — renders at ~20 px  |
 
 After replacing, run:
 
@@ -34,25 +51,25 @@ See `assets/icons/README.md` for the exact format requirements and tooling sugge
 3. Set `"theme": "<my-theme>"` in `config.json`.
 4. Restart the agent. The popup loads the theme file at startup.
 
-Available built-in themes: `default`, `dark`.
+Available built-in theme values (the dropdown in **Settings → Popup theme**): `system` (follow OS light/dark), `light`, `dark`. If you hand-edit `config.json`, any string is accepted at the type level so you can experiment with custom names.
 
 The popup renderer imports the active theme at load time via `<link rel="stylesheet">` injected by the main process. You can also use a full file path as the theme value if you want to keep your theme file outside the app directory.
 
 ### Custom property reference
 
-| Property | Default value | Description |
-|----------|--------------|-------------|
-| `--bg` | `#ffffff` | Card background |
-| `--border` | `#e2e2e2` | Card border and divider |
-| `--text` | `#1d1d1f` | Primary text |
-| `--text-muted` | `#86868b` | Secondary text (source label, IPA) |
-| `--text-example` | `#515154` | Example sentence text |
-| `--accent` | `#0071e3` | Links and interactive elements |
-| `--pos-bg` | `#f0f0f5` | Part-of-speech badge background |
-| `--pos-text` | `#515154` | Part-of-speech badge text |
-| `--shadow` | *(see file)* | Card drop shadow |
-| `--radius` | `12px` | Card border radius |
-| `--font` | system-ui stack | Font family |
+| Property         | Default value   | Description                        |
+| ---------------- | --------------- | ---------------------------------- |
+| `--bg`           | `#ffffff`       | Card background                    |
+| `--border`       | `#e2e2e2`       | Card border and divider            |
+| `--text`         | `#1d1d1f`       | Primary text                       |
+| `--text-muted`   | `#86868b`       | Secondary text (source label, IPA) |
+| `--text-example` | `#515154`       | Example sentence text              |
+| `--accent`       | `#0071e3`       | Links and interactive elements     |
+| `--pos-bg`       | `#f0f0f5`       | Part-of-speech badge background    |
+| `--pos-text`     | `#515154`       | Part-of-speech badge text          |
+| `--shadow`       | _(see file)_    | Card drop shadow                   |
+| `--radius`       | `12px`          | Card border radius                 |
+| `--font`         | system-ui stack | Font family                        |
 
 ---
 
@@ -71,11 +88,11 @@ The footer link is driven by `config.json`:
 
 Examples:
 
-| Engine | `urlTemplate` |
-|--------|--------------|
-| DuckDuckGo | `https://duckduckgo.com/?q={query}` |
-| Bing | `https://www.bing.com/search?q={query}` |
-| Kagi | `https://kagi.com/search?q={query}` |
+| Engine          | `urlTemplate`                                        |
+| --------------- | ---------------------------------------------------- |
+| DuckDuckGo      | `https://duckduckgo.com/?q={query}`                  |
+| Bing            | `https://www.bing.com/search?q={query}`              |
+| Kagi            | `https://kagi.com/search?q={query}`                  |
 | Merriam-Webster | `https://www.merriam-webster.com/dictionary/{query}` |
 
 The link opens in the user's default browser. The popup closes immediately after the link is activated.
@@ -89,7 +106,7 @@ The link opens in the user's default browser. The popup closes immediately after
 **Via `config.json`:**
 
 ```json
-"hotkey": "Ctrl+Shift+D"
+"hotkey": "CommandOrControl+Shift+D"
 ```
 
 Use [Electron accelerator syntax](https://www.electronjs.org/docs/latest/api/accelerator). Restart the agent to apply. If the combination is already registered, the agent logs a warning and falls back to no hotkey — check the dashboard's status panel.
@@ -124,9 +141,10 @@ Adding a language requires a code change and a new dictionary pack:
    At minimum, implement `lemmatise(word: string): string[]` returning the input word plus any morphological variants to try (e.g. for German: strip `-en`, `-t`, `-st` verb endings).
 
 2. **Register the lemmatizer** in `src/core/lemma/index.ts`:
+
    ```ts
-   import { DeLemmatizer } from './de.js';
-   registry.set('de', new DeLemmatizer());
+   import { DeLemmatizer } from "./de.js";
+   registry.set("de", new DeLemmatizer());
    ```
 
 3. **Build the dictionary pack** using `tools/build-dictionary` (see `docs/packaging-a-dictionary.md`). Set `language` in the pack's metadata to the BCP-47 tag for your language (e.g. `de`, `fr`, `ja`).

@@ -1,6 +1,29 @@
-/* Wlook Dashboard — system font, card layout, dark mode */
+/* Wlook Dashboard — system font, card layout, theme-aware surfaces.
+ *
+ * Theme switching is driven by the `data-theme` attribute on <html>,
+ * which app.tsx sets from the dashboard's Settings.theme choice. Mirrors
+ * the cascade pattern used by src/popup/popup.css:
+ *   - data-theme="light"   → base :root light tokens win (no override
+ *                            block needed; the OS-follow branch below is
+ *                            negated by `:not([data-theme="light"])`)
+ *   - data-theme="dark"    → forces the dark surface regardless of OS
+ *   - data-theme="default" → defers to OS preference
+ *   - no attribute / unset → system-follow: matches every :not(...) so
+ *                            the OS media query applies naturally before
+ *                            the renderer hydrates. Means a user whose
+ *                            OS is dark briefly sees the OS-derived dark
+ *                            if their configured theme is "light", then
+ *                            swaps; acceptable for the dashboard (not a
+ *                            repeated popup flicker).
+ *
+ * The explicit `[data-theme="dark"]` block and the OS-follow block are
+ * mutually exclusive: the latter is gated by `:not([data-theme="dark"])`,
+ * so they never both match — source order is irrelevant.
+ */
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -22,6 +45,7 @@
   --dot-green: #30d158;
   --dot-amber: #ff9f0a;
   --dot-red: #ff3b30;
+  --dot-grey: #98989d;
   --input-border: rgba(0, 0, 0, 0.15);
   --input-bg: #ffffff;
   --divider: rgba(0, 0, 0, 0.08);
@@ -30,8 +54,37 @@
   --progress-fill: #0071e3;
 }
 
+/* User-explicit dark: force dark even when the OS is light. */
+:root[data-theme="dark"] {
+  --page-bg: #1c1c1e;
+  --section-bg: #1c1c1e;
+  --card-bg: #2c2c2e;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --text-primary: #f5f5f7;
+  --text-secondary: #98989d;
+  --text-tertiary: #636366;
+  --accent: #0a84ff;
+  --accent-hover: #409cff;
+  --danger: #ff453a;
+  --danger-hover: #ff6961;
+  --dot-green: #30d158;
+  --dot-amber: #ff9f0a;
+  --dot-red: #ff453a;
+  --dot-grey: #636366;
+  --input-border: rgba(255, 255, 255, 0.12);
+  --input-bg: #3a3a3c;
+  --divider: rgba(255, 255, 255, 0.08);
+  --heading-color: #98989d;
+  --progress-bg: rgba(10, 132, 255, 0.2);
+  --progress-fill: #0a84ff;
+}
+
+/* System-follow: dark when the OS is dark, unless the user picked light
+   or dark explicitly. The two `:not(...)` guards make this block and the
+   explicit `:root[data-theme="dark"]` block above mutually exclusive. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
     --page-bg: #1c1c1e;
     --section-bg: #1c1c1e;
     --card-bg: #2c2c2e;
@@ -44,10 +97,11 @@
     --accent-hover: #409cff;
     --danger: #ff453a;
     --danger-hover: #ff6961;
-    --dot-green: #30d158;
-    --dot-amber: #ff9f0a;
-    --dot-red: #ff453a;
-    --input-border: rgba(255, 255, 255, 0.12);
+  --dot-green: #30d158;
+  --dot-amber: #ff9f0a;
+  --dot-red: #ff453a;
+  --dot-grey: #636366;
+  --input-border: rgba(255, 255, 255, 0.12);
     --input-bg: #3a3a3c;
     --divider: rgba(255, 255, 255, 0.08);
     --heading-color: #98989d;
@@ -140,9 +194,10 @@ html, body {
   flex-shrink: 0;
 }
 
-.health-dot--green  { background: var(--dot-green); box-shadow: 0 0 0 2px rgba(48, 209, 88, 0.2); }
-.health-dot--amber  { background: var(--dot-amber); box-shadow: 0 0 0 2px rgba(255, 159, 10, 0.2); }
-.health-dot--red    { background: var(--dot-red);   box-shadow: 0 0 0 2px rgba(255, 59, 48, 0.2); }
+.health-dot--green  { background: var(--dot-green); box-shadow: 0 0 0 2px color-mix(in srgb, var(--dot-green) 20%, transparent); }
+.health-dot--amber  { background: var(--dot-amber); box-shadow: 0 0 0 2px color-mix(in srgb, var(--dot-amber) 20%, transparent); }
+.health-dot--red    { background: var(--dot-red);   box-shadow: 0 0 0 2px color-mix(in srgb, var(--dot-red) 20%, transparent); }
+.health-dot--grey   { background: var(--dot-grey);  box-shadow: 0 0 0 2px color-mix(in srgb, var(--dot-grey) 20%, transparent); }
 
 .health-label {
   font-size: 13px;
@@ -249,7 +304,7 @@ html, body {
   font-size: 10px;
   font-weight: 600;
   color: var(--accent);
-  background: rgba(0, 113, 227, 0.1);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
   padding: 2px 6px;
   border-radius: 4px;
   text-transform: uppercase;
@@ -554,17 +609,6 @@ input[type="checkbox"] {
   text-align: right;
 }
 
-.about-licenses {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.about-licenses li {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
 
 .link {
   color: var(--accent);
@@ -620,11 +664,11 @@ input[type="checkbox"] {
 .btn--danger {
   background: transparent;
   color: var(--danger);
-  border: 1px solid rgba(255, 59, 48, 0.3);
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
 }
 
 .btn--danger:hover:not(:disabled) {
-  background: rgba(255, 59, 48, 0.06);
+  background: color-mix(in srgb, var(--danger) 6%, transparent);
   border-color: var(--danger);
 }
 
@@ -635,7 +679,7 @@ input[type="checkbox"] {
 }
 
 .btn--ghost:hover:not(:disabled) {
-  background: rgba(0, 113, 227, 0.06);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
 }
 
 /* ── Utilities ───────────────────────────────────────────────── */

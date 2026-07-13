@@ -10,11 +10,22 @@ import { About } from './components/About'
 
 // ── Type for the preload API exposed by the Electron main process ─────────────
 
+type Theme = 'light' | 'dark' | 'system'
+
 interface AppConfig {
   preferredDialect: string
   startOnLogin: boolean
-  hotkey: string
-  theme: 'default' | 'dark'
+  /**
+   * Mirrors `WlookConfig.hotkey`: either an Electron-prefix string
+   * (`'CommandOrControl+Shift+D'`) or `null` for the legacy disable
+   * marker documented at `docs/customisation.md` §15.4. None of the
+   * application code in this file reads `hotkey` directly — hotkey
+   * management lives in the agent — but the type is widened to match
+   * what the IPC legitimately returns, so future direct access won't
+   * silently disagree with reality.
+   */
+  hotkey: string | null
+  theme: Theme
   clipboardFallback: boolean
   popupSearch: {
     label: string
@@ -22,6 +33,30 @@ interface AppConfig {
   }
   catalogueUrl: string | null
   version: string
+}
+
+// ── Theme application ────────────────────────────────────────────────────────
+// Mirrors popup.ts:applyTheme: the user's config value is mapped to a
+// `data-theme` attribute on <html>, which dashboard.css scopes on. The
+// 'system' bucket maps to data-theme="default" so the OS-follow media
+// query in dashboard.css picks it up; 'light' and 'dark' map to their
+// own attributes for explicit override.
+
+function applyTheme(theme: Theme): void {
+  let dataTheme: 'light' | 'dark' | 'default'
+  switch (theme) {
+    case 'light':
+      dataTheme = 'light'
+      break
+    case 'dark':
+      dataTheme = 'dark'
+      break
+    case 'system':
+    default:
+      dataTheme = 'default'
+      break
+  }
+  document.documentElement.setAttribute('data-theme', dataTheme)
 }
 
 interface ManifestResponse {
@@ -40,6 +75,12 @@ declare global {
       openExternal: (url: string) => void
       onInstallProgress: (packId: string, cb: (percent: number) => void) => void
       offInstallProgress: (packId: string, cb: (percent: number) => void) => void
+      // The agent's main process pushes a fresh `DashboardStatus` here
+      // after every selection capture via the `'status-update'` channel.
+      // Subscribed once on mount; replaced with the payload so the
+      // System Health row reflects runtime state without polling.
+      onStatusUpdate: (cb: (status: DashboardStatus) => void) => void
+      offStatusUpdate: (cb: (status: DashboardStatus) => void) => void
     }
   }
 }
@@ -71,6 +112,28 @@ function App() {
       .catch((err: Error) => {
         setLoadError(err.message ?? 'Failed to load dashboard data')
       })
+  }, [])
+
+  // Re-apply the dashboard theme whenever the user changes the Settings
+  // dropdown. Without this, the parent state updates but the rendered
+  // surface keeps the previous data-theme attribute. We default to
+  // 'system' when config hasn't loaded yet — matches what the OS-follow
+  // block would resolve to anyway, but keeps the attribute explicit so
+  // a future reader of the DOM doesn't see "unset".
+  useEffect(() => {
+    applyTheme(config?.theme ?? 'system')
+  }, [config?.theme])
+
+  // Subscribe to main-process `status-update` pushes so the dashboard
+  // mirrors the agent's runtime selection-capture method without us
+  // having to poll. The same cb identity is reused on mount/unmount
+  // so preload's statusUpdateHandlers Set removes it cleanly.
+  useEffect(() => {
+    const onStatus = (next: DashboardStatus): void => setStatus(next)
+    window.wlook.onStatusUpdate(onStatus)
+    return () => {
+      window.wlook.offStatusUpdate(onStatus)
+    }
   }, [])
 
   async function handleSaveConfig(patch: Partial<AppConfig>) {

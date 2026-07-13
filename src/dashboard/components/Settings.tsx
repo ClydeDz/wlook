@@ -3,8 +3,14 @@ import { useState, useEffect, useRef } from 'preact/hooks'
 
 interface AppConfig {
   startOnLogin: boolean
-  hotkey: string
-  theme: 'default' | 'dark'
+  /**
+   * Mirrors `WlookConfig.hotkey`: either an Electron-prefix string
+   * (`'CommandOrControl+Shift+D'`) or `null` for the legacy disable
+   * marker. `null` round-trips through the dashboard and renders as
+   * an empty hotkey-display chip until the user picks a new combo.
+   */
+  hotkey: string | null
+  theme: 'light' | 'dark' | 'system'
   clipboardFallback: boolean
   popupSearch: {
     label: string
@@ -66,8 +72,17 @@ export function Settings({ config, onSave }: Props) {
       // Require at least one modifier
       if (!e.ctrlKey && !e.altKey && !e.metaKey) return
 
+      // Construct the canonical Electron accelerator. We collapse Ctrl
+      // and Meta (Cmd on macOS) to the portable `CommandOrControl`
+      // prefix so the on-disk value matches `DEFAULT_CONFIG.hotkey`.
+      // Alt and Shift pass through. The Win-key binding (`Meta`)
+      // intentionally stops here \u2014 users who want a Win-key combo can
+      // hand-edit config.json. The full rewrite rules are documented in
+      // `normaliseHotkey()` (src/core/config.ts), which the agent
+      // applies to the on-disk string at read time as a backstop for
+      // any non-canonical value written by an older recorder.
       const parts: string[] = []
-      if (e.ctrlKey) parts.push('Ctrl')
+      if (e.ctrlKey) parts.push('CommandOrControl')
       if (e.altKey) parts.push('Alt')
       if (e.shiftKey) parts.push('Shift')
       if (e.metaKey) parts.push('Meta')
@@ -164,7 +179,7 @@ export function Settings({ config, onSave }: Props) {
                 <button
                   class="btn btn--ghost"
                   onClick={() => {
-                    const defaultKey = 'Ctrl+Shift+D'
+                    const defaultKey = 'CommandOrControl+Shift+D'
                     setHotkey(defaultKey)
                     setHotkeyConflict(null)
                     setRecording(false)
@@ -193,7 +208,14 @@ export function Settings({ config, onSave }: Props) {
                   save({ theme: val })
                 }}
               >
-                <option value="default">Default (system)</option>
+                {/* "System (Auto)" is the default and listed first so it
+                    matches DEFAULT_CONFIG.theme on first launch; users who
+                    want an explicit choice scroll past it. 'system' is the
+                    raw value — popup.ts maps it to data-theme="default"
+                    internally so the existing CSS media-query hook keeps
+                    working. */}
+                <option value="system">System (Auto)</option>
+                <option value="light">Light</option>
                 <option value="dark">Dark</option>
               </select>
             </div>

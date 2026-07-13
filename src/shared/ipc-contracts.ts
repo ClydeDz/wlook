@@ -25,7 +25,26 @@ export type DashboardStatus = {
   agentRunning: boolean
   hotkeyRegistered: boolean
   hotkeyAccelerator: string
-  selectionCaptureMethod: 'uia' | 'clipboard' | 'unavailable'
+  /**
+   * The path the agent actually used the last time it performed a
+   * selection capture: `'uia'` if it read the focused element via UIA
+   * TextPattern, `'clipboard'` if the SendKeys-based fallback was needed,
+   * or `'unavailable'` if both paths failed to produce a usable result.
+   *
+   * Before the agent performs its first capture (i.e. on a freshly
+   * launched tray app, before the user has pressed the global hotkey),
+   * this is `'unknown'` — rendered as a neutral grey dot with the
+   * prompt "Press the global hotkey to test". Distinguishable from
+   * all three resolved states so the dashboard no longer shows
+   * "UI Automation" (green) before any capture has actually happened.
+   *
+   * Drives the System Health "Selection capture" row in the dashboard —
+   * green / amber / red / grey respectively for the four values above.
+   * The field changed from configured mode (`config.clipboardFallback`)
+   * to runtime mode (the path actually used) in v0.x; see CHANGELOG
+   * for the timeline.
+   */
+  selectionCaptureMethod: 'uia' | 'clipboard' | 'unavailable' | 'unknown'
   installedPacks: PackInfo[]
   preferredDialect: string
   /**
@@ -74,3 +93,4 @@ export type IPCChannel =
   | 'open-external'
   | 'get-config'
   | 'config-response'
+  | 'status-update'

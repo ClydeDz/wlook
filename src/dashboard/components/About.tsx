@@ -1,7 +1,7 @@
-import { h } from 'preact'
+import { h } from "preact";
 
 interface Props {
-  version: string
+  version: string;
 }
 
 export function About({ version }: Props) {
@@ -14,14 +14,29 @@ export function About({ version }: Props) {
           <span class="about-row__value">{version}</span>
         </div>
         <div class="about-row">
-          <span class="about-row__key">Source</span>
+          <span class="about-row__key">Developed by</span>
+          <span class="about-row__value">
+            <a
+              class="link"
+              href="https://clydedsouza.net"
+              onClick={(e) => {
+                e.preventDefault();
+                window.wlook.openExternal("https://clydedsouza.net");
+              }}
+            >
+              Clyde D'Souza
+            </a>
+          </span>
+        </div>
+        <div class="about-row">
+          <span class="about-row__key">App source</span>
           <span class="about-row__value">
             <a
               class="link"
               href="https://github.com/clydedz/wlook"
               onClick={(e) => {
-                e.preventDefault()
-                window.wlook.openExternal('https://github.com/clydedz/wlook')
+                e.preventDefault();
+                window.wlook.openExternal("https://github.com/clydedz/wlook");
               }}
             >
               github.com/clydedz/wlook
@@ -29,46 +44,42 @@ export function About({ version }: Props) {
           </span>
         </div>
         <div class="about-row">
-          <span class="about-row__key">Dictionary sources</span>
-          <span class="about-row__value" />
+          <span class="about-row__key">App license</span>
+          <span class="about-row__value">MIT</span>
         </div>
-
-        <ul class="about-licenses" style={{ marginBottom: 12 }}>
-          <li>
+        <div class="about-row">
+          <span class="about-row__key">Dictionary source</span>
+          <span class="about-row__value">
             <a
               class="link"
-              href="https://kaikki.org"
+              href="https://kaikki.org/dictionary/rawdata.html"
               onClick={(e) => {
-                e.preventDefault()
-                window.wlook.openExternal('https://kaikki.org')
+                e.preventDefault();
+                window.wlook.openExternal(
+                  "https://kaikki.org/dictionary/rawdata.html",
+                );
               }}
             >
-              Wiktionary via Kaikki.org
-            </a>
-            {' '}— CC BY-SA 4.0, Wiktionary contributors
-          </li>
-          <li>
+              Original source
+            </a>{" "}
+            and{" "}
             <a
               class="link"
-              href="https://github.com/globalwordnet/english-wordnet"
+              href="https://github.com/ClydeDz/wlook/releases/tag/0.0.0"
               onClick={(e) => {
-                e.preventDefault()
-                window.wlook.openExternal('https://github.com/globalwordnet/english-wordnet')
+                e.preventDefault();
+                window.wlook.openExternal(
+                  "https://github.com/ClydeDz/wlook/releases/tag/0.0.0",
+                );
               }}
             >
-              Open English WordNet
+              redistributed for this app here
             </a>
-            {' '}— CC BY 4.0, Princeton University &amp; contributors
-          </li>
-        </ul>
-
+          </span>
+        </div>
         <div class="about-row">
           <span class="about-row__key">Dictionary packs</span>
           <span class="about-row__value">Released under CC BY-SA 4.0</span>
-        </div>
-        <div class="about-row">
-          <span class="about-row__key">App license</span>
-          <span class="about-row__value">MIT</span>
         </div>
         <div class="about-row">
           <span class="about-row__key">No telemetry</span>
@@ -76,5 +87,5 @@ export function About({ version }: Props) {
         </div>
       </div>
     </section>
-  )
+  );
 }

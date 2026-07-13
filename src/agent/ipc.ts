@@ -1,4 +1,4 @@
-import { app, ipcMain, shell } from 'electron'
+import { app, ipcMain, shell, BrowserWindow } from 'electron'
 import type { WlookConfig } from '../core/config'
 import { writeConfig } from '../core/config'
 import { getLemmatizer } from '../core/lemma/index'
@@ -19,6 +19,65 @@ export interface IPCContext {
   packManager: PackManager
   hotkeyManager: HotkeyManager
   popupWindow: PopupWindow
+  /**
+   * Returns the path the agent's `SelectionCapture` *actually* used on its
+   * most recent capture attempt, or `null` if no capture has happened yet.
+   * Lets `get-status` report runtime state (what path the user just
+   * exercised) instead of configured state (what is on/off in config).
+   */
+  getSelectionCaptureMethod: () => 'uia' | 'clipboard' | 'unavailable' | null
+  /**
+   * Push the current `DashboardStatus` to every open renderer via the
+   * `'status-update'` event. Used by the agent after each capture so
+   * the dashboard's System Health row reflects the runtime method
+   * without waiting for a mount/reload/install to refresh.
+   */
+  broadcastStatus: () => Promise<void>
+}
+
+/**
+ * Builds a fresh `DashboardStatus` from the live agent state. Used by
+ * `get-status` (renderer pull) and by `main.ts`'s `broadcastStatus`
+ * closure (push after each capture). Single source of truth so the
+ * pull and push paths always agree on field shape.
+ */
+export async function buildDashboardStatus(ctx: IPCContext): Promise<DashboardStatus> {
+  const config = ctx.getConfig()
+  const installedPacks = await ctx.packManager.scanInstalled()
+
+  // Selection capture method reflects which path the **most recent**
+  // capture actually used. Null (no capture yet) collapses to
+  // `'unknown'`, which the renderer renders as a neutral grey dot
+  // with the prompt to test the hotkey.
+  const lastMethod = ctx.getSelectionCaptureMethod()
+  const selectionCaptureMethod: DashboardStatus['selectionCaptureMethod'] =
+    lastMethod ?? 'unknown'
+
+  return {
+    agentRunning: true,
+    hotkeyRegistered: ctx.hotkeyManager.isRegistered(),
+    hotkeyAccelerator: config.hotkey ?? '',
+    selectionCaptureMethod,
+    installedPacks,
+    preferredDialect: config.preferredDialect,
+    dictionariesDir: ctx.packManager.dictionariesDir,
+  }
+}
+
+/**
+ * Fan-out helper for the agent's `broadcastStatus` closure. Sends the
+ * given status to every open `BrowserWindow` via the `'status-update'`
+ * channel. Renderers that haven't subscribed yet drop the event at
+ * their `ipcRenderer` boundary, so broadcasting is safe even when a
+ * window is mid-mount.
+ */
+export function pushStatusToRenderers(status: DashboardStatus): void {
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (win.isDestroyed()) continue
+    const wc = win.webContents
+    if (wc.isDestroyed()) continue
+    wc.send('status-update', status)
+  }
 }
 
 /**
@@ -29,27 +88,7 @@ export function setupIPC(ctx: IPCContext): void {
   // ── Status ──────────────────────────────────────────────────────────────
 
   ipcMain.handle('get-status', async (): Promise<DashboardStatus> => {
-    const config = ctx.getConfig()
-    const installedPacks = await ctx.packManager.scanInstalled()
-
-    // Determine selection capture method based on platform + config
-    let selectionCaptureMethod: DashboardStatus['selectionCaptureMethod']
-    if (process.platform === 'win32') {
-      selectionCaptureMethod = config.clipboardFallback ? 'clipboard' : 'uia'
-    } else {
-      // On non-Windows (dev), we use clipboard directly
-      selectionCaptureMethod = 'clipboard'
-    }
-
-    return {
-      agentRunning: true,
-      hotkeyRegistered: ctx.hotkeyManager.isRegistered(),
-      hotkeyAccelerator: config.hotkey,
-      selectionCaptureMethod,
-      installedPacks,
-      preferredDialect: config.preferredDialect,
-      dictionariesDir: ctx.packManager.dictionariesDir,
-    }
+    return buildDashboardStatus(ctx)
   })
 
   // ── Config ───────────────────────────────────────────────────────────────

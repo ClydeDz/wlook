@@ -19,6 +19,7 @@ const execFileAsync = promisify(execFile)
  */
 export class SelectionCapture {
   private config: WlookConfig
+  private lastMethod: 'uia' | 'clipboard' | 'unavailable' | null = null
 
   constructor(config: WlookConfig) {
     this.config = config
@@ -26,6 +27,22 @@ export class SelectionCapture {
 
   updateConfig(config: WlookConfig): void {
     this.config = config
+  }
+
+  /**
+   * Returns the method the **most recent** `capture()` call actually used,
+   * or `null` if no capture has been attempted yet. Surfaced via
+   * `get-status` so the dashboard's System Health "Selection capture"
+   * row reflects runtime behaviour — not configured mode.
+   *
+   * `'unavailable'` is returned whenever a capture produced no selection,
+   * regardless of which path was attempted: if UIA failed and the
+   * clipboard fallback also returned null (or fallback was disabled),
+   * the agent fundamentally could not read the selection, and the
+   * dashboard should show the red dot.
+   */
+  getLastMethod(): 'uia' | 'clipboard' | 'unavailable' | null {
+    return this.lastMethod
   }
 
   /**
@@ -45,6 +62,7 @@ export class SelectionCapture {
     // Try UIA first (preferred — does not touch the clipboard)
     const uiaResult = await this.captureViaUIA()
     if (uiaResult !== null && uiaResult.trim().length > 0) {
+      this.lastMethod = 'uia'
       return uiaResult.trim()
     }
 
@@ -53,10 +71,16 @@ export class SelectionCapture {
       const cbResult = await this.captureViaClipboard()
       if (cbResult !== null) {
         console.log('[SelectionCapture] Used clipboard fallback to capture selection')
+        this.lastMethod = 'clipboard'
+        return cbResult
       }
-      return cbResult
+      // Clipboard fallback ran but produced nothing — capture fundamentally failed
+      this.lastMethod = 'unavailable'
+      return null
     }
 
+    // UIA failed and no fallback is enabled — capture fundamentally failed
+    this.lastMethod = 'unavailable'
     return null
   }
 
@@ -150,16 +174,26 @@ Start-Sleep -Milliseconds 120
   private captureClipboardDirect(): string | null {
     try {
       const text = clipboard.readText()
-      return text && text.trim().length > 0 ? text.trim() : null
+      if (text && text.trim().length > 0) {
+        this.lastMethod = 'clipboard'
+        return text.trim()
+      }
+      this.lastMethod = 'unavailable'
+      return null
     } catch {
+      this.lastMethod = 'unavailable'
       return null
     }
   }
 }
 
 /**
- * Module-level convenience function. Creates a one-shot SelectionCapture
- * and returns the current selection.
+ * @deprecated Use a persistent `SelectionCapture` instance owned by `main.ts`
+ * instead. The agent holds one such instance for its lifetime so the
+ * runtime `lastMethod` cache updates with every capture; the one-shot
+ * helper below creates a fresh instance per call and silently bypasses
+ * that tracking. Kept exported for ad-hoc tests that don't care about
+ * `lastMethod`. New callers in production code must NOT use this.
  */
 export async function captureCurrentSelection(config: WlookConfig): Promise<string | null> {
   const capture = new SelectionCapture(config)

@@ -5,7 +5,7 @@ interface Props {
   status: DashboardStatus
 }
 
-type DotColor = 'green' | 'amber' | 'red'
+type DotColor = 'green' | 'amber' | 'red' | 'grey'
 
 function Indicator({ color, label, note }: { color: DotColor; label: string; note?: string }) {
   return (
@@ -22,7 +22,7 @@ function hotkeyColor(status: DashboardStatus): DotColor {
 }
 
 function hotkeyLabel(status: DashboardStatus): string {
-  return `Global hotkey: ${status.hotkeyAccelerator || 'Ctrl+Shift+D'}`
+  return `Global hotkey: ${status.hotkeyAccelerator || 'CommandOrControl+Shift+D'}`
 }
 
 function hotkeyNote(status: DashboardStatus): string | undefined {
@@ -33,18 +33,20 @@ function hotkeyNote(status: DashboardStatus): string | undefined {
 function captureColor(method: DashboardStatus['selectionCaptureMethod']): DotColor {
   if (method === 'uia') return 'green'
   if (method === 'clipboard') return 'amber'
+  if (method === 'unknown') return 'grey'
   return 'red'
 }
 
 function captureLabel(method: DashboardStatus['selectionCaptureMethod']): string {
   if (method === 'uia') return 'Selection capture: UI Automation'
   if (method === 'clipboard') return 'Selection capture: Clipboard fallback'
+  if (method === 'unknown') return 'Selection capture: Not yet tested'
   return 'Selection capture: Unavailable'
 }
 
 function captureNote(method: DashboardStatus['selectionCaptureMethod']): string | undefined {
-  if (method === 'clipboard') return 'Enable in Settings for apps without UIA support'
   if (method === 'unavailable') return 'Could not read text selection'
+  if (method === 'unknown') return 'Press the global hotkey to test'
   return undefined
 }
 

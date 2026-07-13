@@ -12,7 +12,7 @@ interface WlookAPI {
   onDefinition(cb: (payload: { query: string; entry: DictionaryEntryResult | null }) => void): void
   openExternal(url: string): void
   notifyReady?(): void
-  getConfig?(): Promise<{ popupSearch?: PopupSearchConfig; theme?: 'default' | 'dark' }>
+  getConfig?(): Promise<{ popupSearch?: PopupSearchConfig; theme?: 'light' | 'dark' | 'system' }>
 }
 
 declare global {
@@ -220,12 +220,31 @@ async function loadConfig(): Promise<void> {
     if (config?.popupSearch) {
       state = { ...state, searchConfig: config.popupSearch }
     }
-    // Apply popup theme: 'dark' forces the dark surface; anything else
-    // (including 'default' or a failure) defers to OS preference via the
-    // CSS media query in popup.css. Setting data-theme on <html> lets the
-    // CSS rules scope accordingly.
-    const theme = config?.theme ?? 'default'
-    document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'default')
+    // Apply popup theme by mapping the user's config value to a
+    // `data-theme` attribute on <html>, which popup.css scopes on:
+    //   - 'light'  → data-theme="light"   forces light surface, beats the
+    //                                     @media prefers-color-scheme:dark
+    //                                     block (because it uses
+    //                                     :root:not([data-theme="light"]))
+    //   - 'dark'   → data-theme="dark"    forces dark surface, beats OS
+    //   - 'system' → data-theme="default" defers to OS preference
+    // Anything else (legacy 'default' from pre-migration configs, or a
+    // malformed value) falls through to 'default' / OS-follow.
+    const theme = config?.theme ?? 'system'
+    let dataTheme: 'light' | 'dark' | 'default'
+    switch (theme) {
+      case 'light':
+        dataTheme = 'light'
+        break
+      case 'dark':
+        dataTheme = 'dark'
+        break
+      case 'system':
+      default:
+        dataTheme = 'default'
+        break
+    }
+    document.documentElement.setAttribute('data-theme', dataTheme)
   } catch {
     // Fall through — ensure data-theme is set so CSS rules resolve predictably.
     document.documentElement.setAttribute('data-theme', 'default')
