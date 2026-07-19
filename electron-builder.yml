@@ -40,6 +40,16 @@ mac:
 linux:
   target: AppImage
   icon: assets/icons/app.png
-publish:
-  provider: github
-  releaseType: release
+# Publishing is handled out-of-band by
+# `.github/workflows/release.yml` (the `softprops/action-gh-release@v2`
+# step) which attaches `Wlook Setup <version>.exe`,
+# `Wlook Setup <version>.exe.blockmap`, and `latest.yml` from the
+# `release/` directory to a GitHub Release.
+# Keeping the old `provider: github` block here would make
+# `PublishManager` try to upload the same artifacts again during
+# `yarn package`, fail with "GitHub Personal Access Token is not set",
+# and exit code 1 — even though no `GH_TOKEN` is needed because the
+# workflow's separate release step does the publish against
+# `secrets.GITHUB_TOKEN`. `never` keeps `yarn package` deterministic
+# locally and in CI.
+publish: never
