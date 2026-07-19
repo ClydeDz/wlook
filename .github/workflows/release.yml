@@ -1,0 +1,81 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '[0-9]*.[0-9]*.[0-9]*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'yarn'
+
+      - name: Compute release version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          VER="${TAG#v}"
+          echo "version=${VER}" >> "$GITHUB_OUTPUT"
+          echo "Tag '${TAG}' → version '${VER}'"
+
+      - name: Pin package.json version
+        env:
+          VER: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          node -e "const fs=require('fs');const p='package.json';const pkg=JSON.parse(fs.readFileSync(p,'utf8'));pkg.version=process.env.VER;fs.writeFileSync(p,JSON.stringify(pkg,null,2)+'\n');console.log('Pinned version to',pkg.version)"
+
+      - run: yarn install
+
+      - run: yarn build
+
+      - run: yarn test
+
+      - run: yarn package
+
+      - name: Extract CHANGELOG notes
+        id: notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          VER="${{ steps.version.outputs.version }}"
+          NOTES=$(awk -v v="${VER}" '
+            $0 == "## [" v "]" { print; in_section = 1; next }
+            /^## \[/ { in_section = 0; next }
+            in_section { print }
+          ' CHANGELOG.md)
+          if [ -z "${NOTES}" ]; then
+            NOTES="Release ${VER}. See CHANGELOG.md for details."
+          fi
+          {
+            echo "notes<<EOF"
+            echo "${NOTES}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: 'Wlook ${{ steps.version.outputs.version }}'
+          body: ${{ steps.notes.outputs.notes }}
+          files: |
+            release/Wlook Setup ${{ steps.version.outputs.version }}.exe
+            release/Wlook Setup ${{ steps.version.outputs.version }}.exe.blockmap
+            release/latest.yml
+          fail_on_unmatched_files: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
