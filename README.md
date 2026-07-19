@@ -16,4 +16,5 @@ A lightweight Windows companion app that brings macOS-style "Look Up" to any tex
 
 - Developed by [Clyde D'Souza](https://clydedsouza.net)
 - Dictionary files from [kaikki.org](https://kaikki.org/dictionary/rawdata.html)
+- App icon from [Lucide](https://lucide.dev/icons/book-a)
 - SVG to ICON conversion from [cloudconvert.com](https://cloudconvert.com/svg-to-ico)
