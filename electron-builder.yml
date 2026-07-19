@@ -40,16 +40,19 @@ mac:
 linux:
   target: AppImage
   icon: assets/icons/app.png
-# Publishing is handled out-of-band by
+# No `publish:` block here. Publishing is done out-of-band by
 # `.github/workflows/release.yml` (the `softprops/action-gh-release@v2`
-# step) which attaches `Wlook Setup <version>.exe`,
+# step), which attaches `Wlook Setup <version>.exe`,
 # `Wlook Setup <version>.exe.blockmap`, and `latest.yml` from the
-# `release/` directory to a GitHub Release.
-# Keeping the old `provider: github` block here would make
-# `PublishManager` try to upload the same artifacts again during
-# `yarn package`, fail with "GitHub Personal Access Token is not set",
-# and exit code 1 — even though no `GH_TOKEN` is needed because the
-# workflow's separate release step does the publish against
-# `secrets.GITHUB_TOKEN`. `never` keeps `yarn package` deterministic
-# locally and in CI.
-publish: never
+# `release/` directory to a GitHub Release using `secrets.GITHUB_TOKEN`.
+#
+# To keep `yarn package` deterministic (no auto-publish from this
+# config), the actual disable signal is set via the
+# `ELECTRON_BUILDER_PUBLISH=never` environment variable — applied at
+# the package script in `package.json` for local runs and at the
+# `yarn package` step in `release.yml` for CI. Do NOT set
+# `publish: 'never'` here: in electron-builder 24.x that value is
+# interpreted as a custom publisher named "never" and the build fails
+# with `Cannot find module 'electron-publisher-never'`. The env var
+# short-circuits publishing at a higher layer and works in all
+# versions.

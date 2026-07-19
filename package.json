@@ -1,11 +1,15 @@
 {
   "name": "wlook",
   "productName": "Wlook",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Offline dictionary lookup — brings macOS Look Up to Windows",
   "main": "dist/agent/main.js",
   "license": "MIT",
   "private": true,
+  "author": {
+    "name": "Clyde D'Souza",
+    "url": "https://clydedsouza.net"
+  },
   "scripts": {
     "build:main": "tsc -p tsconfig.main.json",
     "build:popup": "esbuild src/popup/popup.ts --bundle --outfile=dist/popup/popup.js --platform=browser --target=chrome114",
@@ -16,7 +20,7 @@
     "test": "cross-env ELECTRON_RUN_AS_NODE=1 electron node_modules/vitest/vitest.mjs run",
     "test:watch": "cross-env ELECTRON_RUN_AS_NODE=1 electron node_modules/vitest/vitest.mjs",
     "measure": "node scripts/measure.mjs",
-    "package": "yarn build && electron-builder",
+    "package": "yarn build && cross-env ELECTRON_BUILDER_PUBLISH=never electron-builder",
     "postinstall": "electron-rebuild -f -w better-sqlite3"
   },
   "dependencies": {

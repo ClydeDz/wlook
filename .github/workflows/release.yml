@@ -43,6 +43,8 @@ jobs:
       - run: yarn test
 
       - run: yarn package
+        env:
+          ELECTRON_BUILDER_PUBLISH: 'never'
 
       - name: Extract CHANGELOG notes
         id: notes
