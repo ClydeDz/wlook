@@ -1,7 +1,7 @@
 {
   "name": "wlook",
   "productName": "Wlook",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Offline dictionary lookup — brings macOS Look Up to Windows",
   "main": "dist/agent/main.js",
   "license": "MIT",
@@ -20,7 +20,7 @@
     "test": "cross-env ELECTRON_RUN_AS_NODE=1 electron node_modules/vitest/vitest.mjs run",
     "test:watch": "cross-env ELECTRON_RUN_AS_NODE=1 electron node_modules/vitest/vitest.mjs",
     "measure": "node scripts/measure.mjs",
-    "package": "yarn build && cross-env ELECTRON_BUILDER_PUBLISH=never electron-builder",
+    "package": "yarn build && electron-builder",
     "postinstall": "electron-rebuild -f -w better-sqlite3"
   },
   "dependencies": {

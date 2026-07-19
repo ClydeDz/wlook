@@ -40,19 +40,19 @@ mac:
 linux:
   target: AppImage
   icon: assets/icons/app.png
-# No `publish:` block here. Publishing is done out-of-band by
-# `.github/workflows/release.yml` (the `softprops/action-gh-release@v2`
-# step), which attaches `Wlook Setup <version>.exe`,
-# `Wlook Setup <version>.exe.blockmap`, and `latest.yml` from the
-# `release/` directory to a GitHub Release using `secrets.GITHUB_TOKEN`.
+# `publish: ~` (YAML null) disables electron-builder's publish pipeline
+# entirely. This is the canonical disable knob in electron-builder 24.x
+# — `PublishManager.getPublishConfigs()` short-circuits with `return null`
+# when `config.publish === null`, so no GitHubPublisher is ever
+# constructed and no `app-update.yml` is written into the artifact.
+# Publishing happens out-of-band via the `softprops/action-gh-release@v2`
+# step in `.github/workflows/release.yml`, which attaches the three
+# release files to a GitHub Release using `secrets.GITHUB_TOKEN`.
 #
-# To keep `yarn package` deterministic (no auto-publish from this
-# config), the actual disable signal is set via the
-# `ELECTRON_BUILDER_PUBLISH=never` environment variable — applied at
-# the package script in `package.json` for local runs and at the
-# `yarn package` step in `release.yml` for CI. Do NOT set
-# `publish: 'never'` here: in electron-builder 24.x that value is
-# interpreted as a custom publisher named "never" and the build fails
-# with `Cannot find module 'electron-publisher-never'`. The env var
-# short-circuits publishing at a higher layer and works in all
-# versions.
+# Do NOT use these alternatives — they look like they should work but
+# each fails in this version:
+# - `publish: 'never'` — treated as a publisher-name and fails with
+#   `Cannot find module 'electron-publisher-never'`.
+# - `ELECTRON_BUILDER_PUBLISH=never` env var — `PublishManager.js` in
+#   24.13.3 does not read the env var at all.
+publish: ~
